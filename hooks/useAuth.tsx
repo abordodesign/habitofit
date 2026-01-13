@@ -17,6 +17,7 @@ import {
     logout: () => Promise<void>
     error: string | null
     loading: boolean
+    authReady: boolean
   }
   
   const AuthContext = createContext<IAuth>({
@@ -26,6 +27,7 @@ import {
     logout: async () => {},
     error: null,
     loading: false,
+    authReady: false,
   })
   
   interface AuthProviderProps {
@@ -36,7 +38,7 @@ import {
     const [loading, setLoading] = useState(false)
     const [user, setUser] = useState<User | null>(null)
     const [error, setError] = useState(null)
-    const [initialLoading, setInitialLoading] = useState(true)
+    const [authReady, setAuthReady] = useState(false)
     const router = useRouter()
   
     // Persisting the user
@@ -53,8 +55,8 @@ import {
             setLoading(true)
             router.push('/login')
           }
-  
-          setInitialLoading(false)
+
+          setAuthReady(true)
         }),
       [auth]
     )
@@ -104,13 +106,14 @@ import {
         loading,
         logout,
         error,
+        authReady,
       }),
-      [user, loading]
+      [user, loading, authReady]
     )
-  
+
     return (
       <AuthContext.Provider value={memoedValue}>
-        {!initialLoading && children}
+        {authReady && children}
       </AuthContext.Provider>
     )
   }

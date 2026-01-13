@@ -17,12 +17,13 @@ interface Props {
 }
 
 const Home = ({ products }: Props) => {
-  const { loading, user } = useAuth()
+  const { loading, user, authReady } = useAuth()
 
   const showModal = useRecoilValue(modalState)
   const subscription = useSubscription()
   const [mostrarFavoritas, setMostrarFavoritas] = useState(false);
 
+  if (!authReady) return null
   if (!subscription) return <Plans products={products} />
   if (loading) return null
 
