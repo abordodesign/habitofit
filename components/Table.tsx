@@ -1,6 +1,22 @@
 import { CheckIcon } from "@heroicons/react/24/outline"
 import { PlanProduct } from "@/types/stripe"
 
+const planDetailsByName: Record<
+  string,
+  { videoQuality: string; duration: string; resolution: string }
+> = {
+  'Plano Básico': { videoQuality: 'HD', duration: 'Mensal', resolution: '720p' },
+  'Plano Pro': { videoQuality: 'Full HD', duration: 'Mensal', resolution: '1080p' },
+  'Plano Premium': { videoQuality: '4K', duration: 'Mensal', resolution: '4K' },
+}
+
+const getPlanDetails = (product: PlanProduct) =>
+  planDetailsByName[product.name] ?? {
+    videoQuality: '-',
+    duration: '-',
+    resolution: '-',
+  }
+
 
 interface Props{
     products: PlanProduct[]
@@ -23,7 +39,7 @@ function Table({products , selectedPlan}: Props) {
                 <td className="tableDataTitle">Qualidade do video</td>
                 {products.map((product) =>(
                     <td key={product.id} className={`tableDataFeature ${selectedPlan?.id === product.id ? 'text-[#DF9DC0]' : 'text-[gray]'}`} >
-                        {product.metadata.videoQuality}
+                        {getPlanDetails(product).videoQuality}
                     </td>
                 ))}
             </tr>
@@ -31,7 +47,7 @@ function Table({products , selectedPlan}: Props) {
                 <td className="tableDataTitle">Tempo de assinatura</td>
                 {products.map((product) =>(
                     <td key={product.id} className={`tableDataFeature ${selectedPlan?.id === product.id ? 'text-[#DF9DC0]' : 'text-[gray]'}`} >
-                        {product.description}
+                        {getPlanDetails(product).duration}
                     </td>
                 ))}
             </tr>
@@ -47,7 +63,7 @@ function Table({products , selectedPlan}: Props) {
               }`}
               key={product.id}
             >
-              {product.metadata.resolution}
+              {getPlanDetails(product).resolution}
             </td>
           ))}
         </tr>
