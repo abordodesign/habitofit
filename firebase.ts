@@ -14,13 +14,21 @@ import { getStripePayments } from '@stripe/firestore-stripe-payments';
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 
 export const firebaseConfig = {
-  apiKey: "AIzaSyAPqX30CAOTEWCwCxRC3PbCpc8J0t0cZBE",
-  authDomain: "netflix-59b1f.firebaseapp.com",
-  projectId: "netflix-59b1f",
-  storageBucket: "netflix-59b1f.appspot.com",
-  messagingSenderId: "524336617469",
-  appId: "1:524336617469:web:ff3c5a33d6a0ebbd332b94"
-};
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+}
+
+const missingFirebase = Object.entries(firebaseConfig)
+  .filter(([, value]) => !value)
+  .map(([key]) => key)
+
+if (missingFirebase.length) {
+  throw new Error(`Missing Firebase env vars: ${missingFirebase.join(', ')}`)
+}
 
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
@@ -261,3 +269,4 @@ export async function buscarSeriesFavoritas(userId: string): Promise<string[]> {
     return [] 
   }
 }
+
