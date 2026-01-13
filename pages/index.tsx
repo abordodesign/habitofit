@@ -76,9 +76,7 @@ export const getServerSideProps = async () => {
     throw new Error('Missing env var: NEXT_SECRET_STRIPE_KEY')
   }
 
-  const stripe = new Stripe(process.env.NEXT_SECRET_STRIPE_KEY, {
-    apiVersion: '2023-10-16',
-  })
+  const stripe = new Stripe(process.env.NEXT_SECRET_STRIPE_KEY, {})
 
   const products = await stripe.products
     .list({ active: true })
