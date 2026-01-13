@@ -1,10 +1,10 @@
 import { CheckIcon } from "@heroicons/react/24/outline"
-import { Product } from "@stripe/firestore-stripe-payments"
+import { PlanProduct } from "@/types/stripe"
 
 
 interface Props{
-    products: Product[]
-    selectedPlan: Product | null
+    products: PlanProduct[]
+    selectedPlan: PlanProduct | null
   }
 
 function Table({products , selectedPlan}: Props) {

@@ -6,14 +6,14 @@ import { useRecoilValue } from 'recoil'
 import { modalState } from '@/atoms/modalAtom'
 import Modal from '@/components/Modal'
 import Plans from '@/components/Plans'
-import { Product, getProducts } from '@stripe/firestore-stripe-payments'
 import SeriesList from '@/components/SeriesList'
-import payments from '@/lib/stripe'
 import useSubscription from '@/hooks/useSubscription'
 import { useState } from 'react'
+import Stripe from 'stripe'
+import { PlanProduct } from '@/types/stripe'
 
 interface Props {
-  products: Product[]
+  products: PlanProduct[]
 }
 
 const Home = ({ products }: Props) => {
@@ -71,13 +71,44 @@ const Home = ({ products }: Props) => {
 export default Home
 
 export const getServerSideProps = async () => {
-  const products = await getProducts(payments, {
-    includePrices: true,
-    activeOnly: true,
-  }).catch((error) => {
-    console.error('Erro ao obter produtos:', error)
-    return []
+  if (!process.env.NEXT_SECRET_STRIPE_KEY) {
+    throw new Error('Missing env var: NEXT_SECRET_STRIPE_KEY')
+  }
+
+  const stripe = new Stripe(process.env.NEXT_SECRET_STRIPE_KEY, {
+    apiVersion: '2023-10-16',
   })
+
+  const products = await stripe.products
+    .list({ active: true })
+    .then(async (productList) => {
+      const mapped = await Promise.all(
+        productList.data.map(async (product) => {
+          const prices = await stripe.prices.list({
+            product: product.id,
+            active: true,
+            limit: 1,
+          })
+
+          return {
+            id: product.id,
+            name: product.name,
+            description: product.description,
+            metadata: product.metadata,
+            prices: prices.data.map((price) => ({
+              id: price.id,
+              unit_amount: price.unit_amount,
+            })),
+          }
+        })
+      )
+
+      return mapped
+    })
+    .catch((error) => {
+      console.error('Erro ao obter produtos do Stripe:', error)
+      return []
+    })
 
   return {
     props: {

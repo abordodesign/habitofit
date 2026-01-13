@@ -1,7 +1,7 @@
 import useAuth from "@/hooks/useAuth";
 import { CheckIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
-import { Product } from "@stripe/firestore-stripe-payments";
+import { PlanProduct } from "@/types/stripe";
 import Head from "next/head";
 import Link from "next/link";
 import Table from "./Table";
@@ -9,16 +9,22 @@ import Loader from "./Loader";
 import { createCheckout } from "@/utils/createCheckout";
 
 interface Props {
-  products: Product[];
+  products: PlanProduct[];
 }
 
 function Plans({ products }: Props) {
   const { logout, user } = useAuth();
-  const [selectedPlan, setSelectedPlan] = useState<Product | null>(products[2]);
+  const [selectedPlan, setSelectedPlan] = useState<PlanProduct | null>(
+    products[2] ?? null
+  );
   const [isBillingLoading, setIsBillingLoading] = useState(false);
 
   const subscribeToPlan = async () => {
     if (!user || !selectedPlan) return;
+    if (!selectedPlan.prices?.length) {
+      console.error("Plano sem preço ativo no Stripe.");
+      return;
+    }
   
     try {
       if (!user.email) {
