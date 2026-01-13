@@ -23,6 +23,10 @@ export default async function handler(
   }
 
   const { priceId, userId, email } = req.body as CheckoutSessionRequest;
+  const baseUrl =
+    req.headers.origin ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    'https://habitofit-iujc.vercel.app';
 
   if (!priceId || !userId || !email) {
     return res
@@ -41,8 +45,8 @@ export default async function handler(
         },
       ],
       customer_email: email, // Preenche automaticamente o e-mail do cliente
-      success_url: `https://netflix-habito.vercel.app/`,
-      cancel_url: `https://netflix-habito.vercel.app/`,
+      success_url: `${baseUrl}/`,
+      cancel_url: `${baseUrl}/`,
       metadata: {
         userId, // Incluímos o userId nos metadados
       },
