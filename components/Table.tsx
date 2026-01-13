@@ -5,17 +5,21 @@ const planDetailsByName: Record<
   string,
   { videoQuality: string; duration: string; resolution: string }
 > = {
-  'Plano Básico': { videoQuality: 'HD', duration: 'Mensal', resolution: '720p' },
-  'Plano Pro': { videoQuality: 'Full HD', duration: 'Mensal', resolution: '1080p' },
-  'Plano Premium': { videoQuality: '4K', duration: 'Mensal', resolution: '4K' },
+  'plano básico': { videoQuality: 'HD', duration: 'Mensal', resolution: '720p' },
+  'plano pro': { videoQuality: 'Full HD', duration: 'Mensal', resolution: '1080p' },
+  'plano premium': { videoQuality: '4K', duration: 'Mensal', resolution: '4K' },
 }
 
-const getPlanDetails = (product: PlanProduct) =>
-  planDetailsByName[product.name] ?? {
-    videoQuality: '-',
-    duration: '-',
-    resolution: '-',
-  }
+const getPlanDetails = (product: PlanProduct) => {
+  const key = product.name.trim().toLowerCase()
+  return (
+    planDetailsByName[key] ?? {
+      videoQuality: '-',
+      duration: '-',
+      resolution: '-',
+    }
+  )
+}
 
 
 interface Props{
