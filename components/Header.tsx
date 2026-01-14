@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import useAuth from '@/hooks/useAuth';
 import { auth, db } from '@/firebase';
 import { collection, doc, getDoc, getDocs, serverTimestamp, setDoc } from 'firebase/firestore';
-import { updatePassword, updateProfile } from 'firebase/auth';
+import { EmailAuthProvider, reauthenticateWithCredential, updatePassword, updateProfile } from 'firebase/auth';
 import { supabase } from '@/lib/supabase';
 
 
@@ -24,6 +24,7 @@ function Header({
     const [modalView, setModalView] = useState<'config' | 'editAccount'>('config');
     const [editName, setEditName] = useState('');
     const [editPassword, setEditPassword] = useState('');
+    const [currentPassword, setCurrentPassword] = useState('');
     const [editPhoto, setEditPhoto] = useState<File | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [saveError, setSaveError] = useState('');
@@ -178,14 +179,16 @@ function Header({
             }
 
             if (editPassword.trim()) {
-                try {
-                    await updatePassword(currentUser, editPassword.trim());
-                } catch (passwordError: any) {
-                    if (passwordError?.code === 'auth/requires-recent-login') {
-                        throw new Error('Faça login novamente para alterar a senha.');
-                    }
-                    throw passwordError;
+                if (!currentPassword.trim()) {
+                    throw new Error('Informe sua senha atual para alterar a senha.');
                 }
+
+                const credential = EmailAuthProvider.credential(
+                    currentUser.email || '',
+                    currentPassword.trim()
+                );
+                await reauthenticateWithCredential(currentUser, credential);
+                await updatePassword(currentUser, editPassword.trim());
             }
 
             await setDoc(
@@ -283,6 +286,7 @@ function Header({
                                                         setShowDropdownMenu(false);
                                                         setSaveError('');
                                                         setEditPassword('');
+                                                        setCurrentPassword('');
                                                     }}
                                                     className="block w-full px-4 py-3 text-left text-white hover:bg-[#DF9DC0]/30"
                                                 >
@@ -349,6 +353,17 @@ function Header({
                                             </div>
 
                                             {/* Senha */}
+                                            <div>
+                                                <label className="block mb-1 text-gray-300">Senha Atual</label>
+                                                <input
+                                                    type="password"
+                                                    placeholder="Senha atual"
+                                                    className="w-full bg-[#2a2a2a] text-white p-2 rounded"
+                                                    value={currentPassword}
+                                                    onChange={(event) => setCurrentPassword(event.target.value)}
+                                                />
+                                            </div>
+
                                             <div>
                                                 <label className="block mb-1 text-gray-300">Nova Senha</label>
                                                 <input
