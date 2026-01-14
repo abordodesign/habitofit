@@ -133,6 +133,12 @@ function Header({
         };
     }, [authReady, user]);
 
+    const withCacheBuster = (url: string) => {
+        if (!url) return url;
+        const joiner = url.includes('?') ? '&' : '?';
+        return `${url}${joiner}t=${Date.now()}`;
+    };
+
     const handleSaveAccount = async () => {
         const currentUser = auth.currentUser;
         if (!currentUser) {
@@ -161,7 +167,7 @@ function Header({
                 if (!data?.publicUrl) {
                     throw new Error('Nao foi possivel obter a URL da foto.');
                 }
-                photoURL = data.publicUrl;
+                photoURL = withCacheBuster(data.publicUrl);
             }
 
             const nextName = editName.trim();
@@ -431,4 +437,7 @@ function Header({
 }
 
 export default Header;
+
+
+
 

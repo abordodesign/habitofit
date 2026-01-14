@@ -50,7 +50,7 @@ const Home = ({ products }: Props) => {
         <div className='flex justify-between w-full max-w-[1650px] m-auto '>
           <div>
             <p className='text-[#DF9DC0]'>
-              2023 - HábitoFit - Todos os direitos reservados
+              2026 - HábitoFit - Todos os direitos reservados
             </p>
 
             <a href="https://fast.com/pt/" target="_blank">
