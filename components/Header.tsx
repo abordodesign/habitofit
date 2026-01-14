@@ -29,7 +29,7 @@ function Header({
     const [saveError, setSaveError] = useState('');
     const [avatarUrl, setAvatarUrl] = useState<string>('');
 
-    const { logout } = useAuth();
+    const { logout, user, authReady } = useAuth();
 
     const [userData, setUserData] = useState({ name: '', email: '' });
     const [stripeData, setStripeData] = useState({
@@ -75,8 +75,7 @@ function Header({
         };
 
         const fetchUserAndSubscription = async () => {
-            const user = auth.currentUser;
-            if (!user) return;
+            if (!authReady || !user) return;
 
             const uid = user.uid;
             const userDoc = await getDoc(doc(db, 'users', uid));
@@ -88,6 +87,7 @@ function Header({
             setUserData({ name: resolvedName, email: user.email || '' });
             setEditName(resolvedName);
             setAvatarUrl(resolvedPhoto);
+            setDisplayName(resolvedName || 'Usuário');
 
 
             const subSnap = await getDocs(collection(db, 'customers', uid, 'subscriptions'));
@@ -130,7 +130,7 @@ function Header({
         return () => {
             if (notiButton) notiButton.removeEventListener('click', handleToggleNotification);
         };
-    }, []);
+    }, [authReady, user]);
 
     const handleSaveAccount = async () => {
         const currentUser = auth.currentUser;
