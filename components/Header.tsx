@@ -49,6 +49,26 @@ function Header({
         return normalized;
     };
 
+    const handleUpdateCard = async () => {
+        if (!user) return;
+        try {
+            const token = await user.getIdToken();
+            const response = await fetch('/api/create-portal-session', {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            if (!response.ok) return;
+            const data = await response.json();
+            if (data?.url) {
+                window.location.href = data.url;
+            }
+        } catch (error) {
+            console.error('Erro ao abrir portal do Stripe:', error);
+        }
+    };
+
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -370,6 +390,12 @@ function Header({
                                                 <p className="text-gray-300">Validade: {stripeData.expMonth}/{stripeData.expYear}</p>
                                                 <p className="text-gray-300">Status: {stripeData.status}</p>
                                                 <p className="text-gray-300">Próxima Renovação: {stripeData.renewalDate}</p>
+                                                <button
+                                                    onClick={handleUpdateCard}
+                                                    className="mt-2 w-full rounded bg-[#2a2a2a] px-3 py-2 text-white hover:bg-[#DF9DC0]/30"
+                                                >
+                                                    Atualizar cartao
+                                                </button>
                                             </div>
                                             <div className='space-y-2'>
                                                 <h3 className="font-bold mb-1">Sobre este aplicativo</h3>
