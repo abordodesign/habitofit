@@ -20,7 +20,7 @@ function Banner() {
     <div className='relative flex flex-col space-y-6 py-30 px-20 md:space-y-10 md:h-[100vh] lg:justify-end overflow-hidden p-10'>
       {/* Vídeo de fundo */}
       <video
-        className="absolute top-0 left-0 -z-10 h-[100vh] w-full object-cover"
+        className="absolute top-0 left-0 -z-20 h-[100vh] w-full object-cover"
         autoPlay
         muted
         loop
@@ -35,6 +35,7 @@ function Banner() {
           className="h-full w-full object-cover"
         />
       </video>
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-black/0 via-black/30 to-[#141414]" />
 
       {/* Conteúdo */}
       <div className='flex items-center'>
