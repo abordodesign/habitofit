@@ -162,3 +162,15 @@ Resumo do trabalho
 
 Rollback aplicado
 - Removido portal do Stripe para atualizar cartao (revert para o estado de `a781dc7`).
+
+## Registro de Alteracoes - 2026-01-14 (BRT - Belo Horizonte)
+
+Nome: Codex
+
+Resumo do trabalho
+- Ajuste de layout do banner e gradiente principal para estilo Netflix.
+- Titulos padronizados com Roboto Bold via classe `sectionTitle`.
+- Titulo "Aulas Gravadas - Mais populares" no carrossel principal.
+- Secao de parceiros com carrossel horizontal e logo repetido.
+- Exibicao do Stripe Customer ID no modal de configuracoes.
+- Documento `STRIPE_CONFIG.md` com fluxo de integracao.
