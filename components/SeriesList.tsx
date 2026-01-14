@@ -56,13 +56,17 @@ const SeriesList = ({ mostrarFavoritas }: { mostrarFavoritas: boolean }) => {
           <h3 className="sectionTitle text-white text-base md:text-2xl">
             Parceiros Exclusivos da Habito FIT
           </h3>
-          <div className="mt-4 flex items-center gap-8 overflow-x-auto scrollbar-hide py-2">
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-10 overflow-x-auto scrollbar-hide py-2 md:flex-nowrap md:justify-start md:snap-x md:snap-mandatory">
             {Array.from({ length: 7 }).map((_, index) => (
               <div
                 key={`logo-parceiro-${index}`}
-                className="flex h-16 min-w-[160px] items-center justify-center rounded-md bg-black/40 px-6"
+                className="flex h-20 min-w-[200px] snap-start items-center justify-center"
               >
-                <img src="/logo-parceiro-1.svg" alt="Logo parceiro" className="max-h-10 w-auto" />
+                <img
+                  src="/logo-parceiro-1.svg"
+                  alt="Logo parceiro"
+                  className="h-12 w-auto md:h-14"
+                />
               </div>
             ))}
           </div>
