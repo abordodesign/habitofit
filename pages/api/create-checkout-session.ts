@@ -23,8 +23,12 @@ export default async function handler(
   }
 
   const { priceId, userId, email } = req.body as CheckoutSessionRequest;
+  const forwardedProto = req.headers['x-forwarded-proto'];
+  const forwardedHost = req.headers['x-forwarded-host'];
+  const host = forwardedHost || req.headers.host;
+  const proto = Array.isArray(forwardedProto) ? forwardedProto[0] : forwardedProto;
   const baseUrl =
-    req.headers.origin ||
+    (host ? `${proto || 'https'}://${host}` : undefined) ||
     process.env.NEXT_PUBLIC_SITE_URL ||
     'https://habitofit-iujc.vercel.app';
 
