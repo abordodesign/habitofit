@@ -98,7 +98,9 @@ service cloud.firestore {
 ## Supabase Storage (avatar)
 
 Crie um bucket chamado `avatars` e deixe publico.
-Exemplo de policy (SQL) para leitura publica e upload autenticado:
+Para restringir por uid, o arquivo deve ser salvo como `{uid}.ext`.
+
+Exemplo de policies (SQL):
 
 ```sql
 -- leitura publica
@@ -106,10 +108,29 @@ create policy "public read avatars"
 on storage.objects for select
 using (bucket_id = 'avatars');
 
--- upload do proprio usuario (usa o uid do Firebase no nome do arquivo)
+-- upload apenas do proprio usuario (nome do arquivo com uid)
 create policy "user upload avatars"
 on storage.objects for insert
-with check (bucket_id = 'avatars');
+with check (
+  bucket_id = 'avatars'
+  and auth.uid()::text = split_part(name, '.', 1)
+);
+
+-- update apenas do proprio usuario
+create policy "user update avatars"
+on storage.objects for update
+using (
+  bucket_id = 'avatars'
+  and auth.uid()::text = split_part(name, '.', 1)
+);
+
+-- delete apenas do proprio usuario
+create policy "user delete avatars"
+on storage.objects for delete
+using (
+  bucket_id = 'avatars'
+  and auth.uid()::text = split_part(name, '.', 1)
+);
 ```
 
 ## Learn More
