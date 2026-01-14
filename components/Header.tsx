@@ -41,6 +41,7 @@ function Header({
         expYear: '',
         status: '',
         renewalDate: '',
+        stripeCustomerId: '',
     });
     const mapStripeStatus = (status: string | null) => {
         const normalized = String(status || '').toLowerCase();
@@ -177,6 +178,7 @@ function Header({
                     expYear: data?.card?.expYear || prev.expYear || '**',
                     status: mapStripeStatus(data?.status) || prev.status || '',
                     renewalDate: data?.renewalDate || prev.renewalDate || '',
+                    stripeCustomerId: data?.stripeCustomerId || prev.stripeCustomerId || '',
                 }));
             } catch (error) {
                 console.error('Erro ao buscar dados do Stripe:', error);
@@ -382,7 +384,7 @@ function Header({
                                             </div>
                                             <div>
                                                 <h3 className="font-bold mb-1">ID da Conta</h3>
-                                                <p className="text-gray-400 text-xs">#d41d8cd98f00b204e9800998ecf8427e</p>
+                                                <p className="text-gray-400 text-xs">#{stripeData.stripeCustomerId || '--'}</p>
                                             </div>
                                             <div>
                                                 <h3 className="font-bold mb-1">Suporte</h3>

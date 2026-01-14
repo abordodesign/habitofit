@@ -99,7 +99,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!summary.email && stripeCustomer.email) {
       summary.email = stripeCustomer.email;
     }
-    return res.status(200).json(summary);
+    return res.status(200).json({
+      ...summary,
+      stripeCustomerId: stripeCustomer.id,
+    });
   } catch (error: any) {
     const statusCode = error?.statusCode || 500;
     const message = error?.message || 'Failed to fetch Stripe data';
