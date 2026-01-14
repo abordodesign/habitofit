@@ -41,6 +41,13 @@ function Header({
         status: '',
         renewalDate: '',
     });
+    const mapStripeStatus = (status: string | null) => {
+        const normalized = String(status || '').toLowerCase();
+        if (!normalized) return '';
+        if (['active', 'trialing', 'past_due'].includes(normalized)) return 'Ativa';
+        if (['canceled', 'incomplete', 'incomplete_expired', 'unpaid'].includes(normalized)) return 'Inativa';
+        return normalized;
+    };
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -148,8 +155,34 @@ function Header({
             }
         };
 
+        const fetchStripeSummary = async () => {
+            if (!authReady || !user) return;
+            try {
+                const token = await user.getIdToken();
+                const response = await fetch('/api/stripe-customer-summary', {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+                if (!response.ok) return;
+                const data = await response.json();
+                setStripeData((prev) => ({
+                    ...prev,
+                    cardBrand: data?.card?.brand || prev.cardBrand || '****',
+                    cardLast4: data?.card?.last4 || prev.cardLast4 || '****',
+                    expMonth: data?.card?.expMonth || prev.expMonth || '**',
+                    expYear: data?.card?.expYear || prev.expYear || '**',
+                    status: mapStripeStatus(data?.status) || prev.status || '',
+                    renewalDate: data?.renewalDate || prev.renewalDate || '',
+                }));
+            } catch (error) {
+                console.error('Erro ao buscar dados do Stripe:', error);
+            }
+        };
+
 
         fetchUserAndSubscription();
+        fetchStripeSummary();
 
         const notiButton = document.querySelector('.noti');
         if (notiButton) notiButton.addEventListener('click', handleToggleNotification);
