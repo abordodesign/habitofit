@@ -74,7 +74,7 @@ async function getRawBody(req: NextApiRequest): Promise<Buffer> {
       case 'checkout.session.completed':
         const session = event.data.object as Stripe.Checkout.Session;
   
-        const userId = session.metadata?.userId;
+        const userId = session.client_reference_id || session.metadata?.userId;
         const stripeId = session.customer as string;
         const email = session.customer_details?.email;
   
