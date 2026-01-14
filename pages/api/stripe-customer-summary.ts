@@ -25,14 +25,18 @@ const isStripeMissingCustomer = (error: any) =>
   typeof error?.message === 'string' &&
   error.message.includes('No such customer');
 
+const isStripeCustomer = (
+  customer: Stripe.Customer | Stripe.DeletedCustomer
+): customer is Stripe.Customer => !('deleted' in customer && customer.deleted);
+
 const resolveStripeCustomer = async (
   stripeCustomerId: string | undefined,
   email: string
-) => {
+): Promise<Stripe.Customer | null> => {
   if (stripeCustomerId) {
     try {
       const customer = await stripe.customers.retrieve(stripeCustomerId);
-      if (typeof customer !== 'string') {
+      if (typeof customer !== 'string' && isStripeCustomer(customer)) {
         return customer;
       }
     } catch (error: any) {
@@ -44,7 +48,8 @@ const resolveStripeCustomer = async (
 
   if (email) {
     const customers = await stripe.customers.list({ email, limit: 1 });
-    return customers.data[0] || null;
+    const customer = customers.data[0];
+    return customer && isStripeCustomer(customer) ? customer : null;
   }
 
   return null;
