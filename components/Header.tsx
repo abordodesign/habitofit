@@ -3,10 +3,10 @@ import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import useAuth from '@/hooks/useAuth';
-import { auth, db, storage } from '@/firebase';
+import { auth, db } from '@/firebase';
 import { collection, doc, getDocs, serverTimestamp, setDoc } from 'firebase/firestore';
 import { updatePassword, updateProfile } from 'firebase/auth';
-import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
+import { supabase } from '@/lib/supabase';
 
 
 function Header({
@@ -138,9 +138,21 @@ function Header({
             let photoURL = currentUser.photoURL || '';
 
             if (editPhoto) {
-                const avatarRef = ref(storage, `avatars/${currentUser.uid}`);
-                await uploadBytes(avatarRef, editPhoto);
-                photoURL = await getDownloadURL(avatarRef);
+                const fileExt = editPhoto.name.split('.').pop() || 'jpg';
+                const filePath = `${currentUser.uid}.${fileExt}`;
+                const { error: uploadError } = await supabase.storage
+                    .from('avatars')
+                    .upload(filePath, editPhoto, { upsert: true, contentType: editPhoto.type });
+
+                if (uploadError) {
+                    throw new Error(uploadError.message);
+                }
+
+                const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+                if (!data?.publicUrl) {
+                    throw new Error('Nao foi possivel obter a URL da foto.');
+                }
+                photoURL = data.publicUrl;
             }
 
             const nextName = editName.trim();

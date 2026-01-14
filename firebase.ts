@@ -4,7 +4,6 @@ import { initializeApp, getApp, getApps } from 'firebase/app'
 import { collection, getDocs, where, getFirestore,deleteDoc, doc, getDoc, setDoc, query } from 'firebase/firestore'
 
 import { getAuth } from 'firebase/auth'
-import { getStorage } from 'firebase/storage'
 import { getStripePayments } from '@stripe/firestore-stripe-payments';
 
 
@@ -35,7 +34,6 @@ if (missingFirebase.length) {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore();
 const auth = getAuth();
-const storage = getStorage();
 
 
 
@@ -204,7 +202,7 @@ export async function getProductsAndCustomers() {
 }
  
 export default app
-export { auth, db, storage }
+export { auth, db }
 
 export async function buscarMediaRating(itemId: string, tipo: "serie" | "episodio") {
   const q = query(collection(db, "ratings"), where("itemId", "==", itemId), where("tipo", "==", tipo));

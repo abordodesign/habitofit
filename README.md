@@ -40,6 +40,78 @@ Variaveis de ambiente necessarias (Vercel e local):
 
 Sem essas variaveis, o webhook nao consegue salvar a assinatura e o usuario volta para "Escolha seu plano".
 
+## Regras do Firebase (Firestore)
+
+As regras abaixo liberam apenas o acesso do proprio usuario aos seus dados. Sao usadas para:
+- `users/{uid}`: perfil (nome, email, foto)
+- `customers/{uid}`: dados de assinatura, pagamentos e checkout_sessions
+- `ratings`: leitura publica, escrita do proprio usuario
+- `favoritos`: leitura/escrita do proprio usuario
+- Foto de perfil agora usa Supabase Storage (bucket `avatars`)
+
+Firestore (Rules):
+```firestore
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    // Perfil do usuario
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Dados do cliente e subcolecoes
+    match /customers/{userId}/{document=**} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Ratings: leitura publica, escrita do proprio usuario
+    match /ratings/{ratingId} {
+      allow read: if true;
+      allow create, update: if signedIn() && request.resource.data.userId == request.auth.uid;
+      allow delete: if signedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // Favoritos: apenas do proprio usuario
+    match /favoritos/{favId} {
+      allow read, create, update, delete: if signedIn()
+        && request.resource.data.userId == request.auth.uid
+        && (resource == null || resource.data.userId == request.auth.uid);
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+```
+
+## Supabase Storage (avatar)
+
+Crie um bucket chamado `avatars` e deixe publico.
+Exemplo de policy (SQL) para leitura publica e upload autenticado:
+
+```sql
+-- leitura publica
+create policy "public read avatars"
+on storage.objects for select
+using (bucket_id = 'avatars');
+
+-- upload do proprio usuario (usa o uid do Firebase no nome do arquivo)
+create policy "user upload avatars"
+on storage.objects for insert
+with check (bucket_id = 'avatars');
+```
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
