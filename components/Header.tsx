@@ -84,8 +84,8 @@ function Header({
             const userRef = doc(db, 'users', uid);
             unsubscribeProfile = onSnapshot(userRef, (snap) => {
                 const profile = snap.exists() ? snap.data() : null;
-                const resolvedName = profile?.name || user.displayName || '';
-                const resolvedPhoto = profile?.photoURL || user.photoURL || '';
+                const resolvedName = profile?.name || auth.currentUser?.displayName || user.displayName || '';
+                const resolvedPhoto = profile?.photoURL || auth.currentUser?.photoURL || user.photoURL || '';
 
                 setUserData({ name: resolvedName, email: user.email || '' });
                 setEditName(resolvedName);
@@ -107,12 +107,6 @@ function Header({
 
                 const paymentSnap = await getDocs(collection(db, 'customers', uid, 'payments'));
                 const latestCharge = paymentSnap.docs[0]?.data()?.charges?.data?.[0]?.payment_method_details?.card;
-                const fullName = paymentSnap.docs[0]?.data()?.charges?.data?.[0]?.billing_details?.name;
-                if (fullName) {
-                    const firstName = fullName.split(' ')[0];
-                    const capitalized = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
-                    setDisplayName(capitalized);
-                }
 
                 setStripeData({
                     cardBrand: latestCharge?.brand || '****',
@@ -437,3 +431,4 @@ function Header({
 }
 
 export default Header;
+
