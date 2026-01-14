@@ -79,6 +79,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       customer: stripeCustomerId,
       status: 'all',
       limit: 1,
+      expand: ['data.default_payment_method', 'data.latest_invoice.payment_intent.payment_method'],
     });
     const subscription = subscriptions.data[0] || null;
     const status = subscription?.status || null;
@@ -86,12 +87,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ? new Date(subscription.current_period_end * 1000).toLocaleDateString('pt-BR')
       : null;
 
+    const subDefaultMethod = subscription?.default_payment_method;
+    const subMethod =
+      subDefaultMethod && typeof subDefaultMethod !== 'string' ? subDefaultMethod : null;
+    const invoiceMethod =
+      subscription?.latest_invoice && typeof subscription.latest_invoice !== 'string'
+        ? (subscription.latest_invoice.payment_intent &&
+            typeof subscription.latest_invoice.payment_intent !== 'string'
+            ? subscription.latest_invoice.payment_intent.payment_method
+            : null)
+        : null;
+    const invoiceCard =
+      invoiceMethod && typeof invoiceMethod !== 'string' ? invoiceMethod.card : null;
+
     const paymentMethods = await stripe.paymentMethods.list({
       customer: stripeCustomerId,
       type: 'card',
       limit: 1,
     });
-    const card = paymentMethods.data[0]?.card || null;
+    const card = subMethod?.card || invoiceCard || paymentMethods.data[0]?.card || null;
 
     const response: SummaryResponse = {
       email,

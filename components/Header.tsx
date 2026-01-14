@@ -34,6 +34,7 @@ function Header({
 
     const [userData, setUserData] = useState({ name: '', email: '' });
     const [stripeData, setStripeData] = useState({
+        email: '',
         cardBrand: '',
         cardLast4: '',
         expMonth: '',
@@ -158,7 +159,7 @@ function Header({
         const fetchStripeSummary = async () => {
             if (!authReady || !user) return;
             try {
-                const token = await user.getIdToken();
+                const token = await user.getIdToken(true);
                 const response = await fetch('/api/stripe-customer-summary', {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -168,6 +169,7 @@ function Header({
                 const data = await response.json();
                 setStripeData((prev) => ({
                     ...prev,
+                    email: data?.email || prev.email || '',
                     cardBrand: data?.card?.brand || prev.cardBrand || '****',
                     cardLast4: data?.card?.last4 || prev.cardLast4 || '****',
                     expMonth: data?.card?.expMonth || prev.expMonth || '**',
@@ -365,11 +367,11 @@ function Header({
                                             </div>
                                             <div className='space-y-2'>
                                                 <h3 className="font-bold mb-1">Informações de Pagamento</h3>
-                                                <p className="text-gray-300">E-mail: {userData.email}</p>
+                                                <p className="text-gray-300">E-mail: {stripeData.email || userData.email}</p>
                                                 <p className="text-gray-300">Número do Cartão: 💳 {stripeData.cardBrand} **** **** {stripeData.cardLast4}</p>
-                                                <p className="text-gray-300">Validade: {stripeData.expMonth}/{stripeData.expYear}</p>
-                                                <p className="text-gray-300">Status: {stripeData.status}</p>
-                                                <p className="text-gray-300">Próxima Renovação: {stripeData.renewalDate}</p>
+                                                <p className="text-gray-300">Validade: {stripeData.expMonth || '--'}/{stripeData.expYear || '--'}</p>
+                                                <p className="text-gray-300">Status: {stripeData.status || '--'}</p>
+                                                <p className="text-gray-300">Proxima Renovacao: {stripeData.renewalDate || '--/--/----'}</p>
                                             </div>
                                             <div className='space-y-2'>
                                                 <h3 className="font-bold mb-1">Sobre este aplicativo</h3>
@@ -499,6 +501,9 @@ function Header({
 }
 
 export default Header;
+
+
+
 
 
 
