@@ -59,14 +59,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(404).json({ error: 'Stripe customer not found' });
     }
 
-    const originHeader = Array.isArray(req.headers.origin)
-      ? req.headers.origin[0]
-      : req.headers.origin;
-    const refererHeader = Array.isArray(req.headers.referer)
-      ? req.headers.referer[0]
-      : req.headers.referer;
-    const baseUrl = originHeader || refererHeader || 'http://localhost:3000';
-    const returnUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    const origin = req.headers.origin || req.headers.referer || 'http://localhost:3000';
+    const returnUrl = origin.toString().replace(/\\/$/, '');
 
     const session = await stripe.billingPortal.sessions.create({
       customer: stripeCustomerId,
