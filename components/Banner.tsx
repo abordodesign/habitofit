@@ -35,7 +35,7 @@ function Banner() {
           className="h-full w-full object-cover"
         />
       </video>
-      <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-black/0 via-black/30 to-[#141414]" />
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-black via-black/80 to-[#141414]" />
 
       {/* Conteúdo */}
       <div className='flex items-center'>

@@ -28,7 +28,7 @@ const Home = ({ products }: Props) => {
   if (loading) return null
 
   return (
-    <div className='relative h-screen bg-gradient-to-b lg:h-[140vh]'>
+    <div className='relative h-screen bg-gradient-to-b from-black via-[#141414] to-[#141414] lg:h-[140vh]'>
       <Head>
         <title>Hábito Fit</title>
       </Head>
