@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import useAuth from '@/hooks/useAuth';
 import { auth, db } from '@/firebase';
-import { collection, doc, getDocs, limit, onSnapshot, orderBy, query, serverTimestamp, setDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query, serverTimestamp, setDoc } from 'firebase/firestore';
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword, updateProfile } from 'firebase/auth';
 import { supabase } from '@/lib/supabase';
 
@@ -94,6 +94,10 @@ function Header({
             });
 
 
+            const customerSnap = await getDoc(doc(db, 'customers', uid));
+            const customerData = customerSnap.exists() ? customerSnap.data() : null;
+            const customerCard = customerData?.paymentMethod;
+
             const subSnap = await getDocs(
                 query(
                     collection(db, 'customers', uid, 'subscriptions'),
@@ -121,16 +125,26 @@ function Header({
                         limit(1)
                     )
                 );
-                const latestCharge = paymentSnap.docs[0]?.data()?.charges?.data?.[0]?.payment_method_details?.card;
+                const latestPayment = paymentSnap.docs[0]?.data();
+                const latestCharge = latestPayment?.charges?.data?.[0]?.payment_method_details?.card;
+                const latestCard = latestPayment?.card || latestCharge || customerCard;
 
                 setStripeData({
-                    cardBrand: latestCharge?.brand || '****',
-                    cardLast4: latestCharge?.last4 || '****',
-                    expMonth: latestCharge?.exp_month || '**',
-                    expYear: latestCharge?.exp_year || '**',
+                    cardBrand: latestCard?.brand || '****',
+                    cardLast4: latestCard?.last4 || '****',
+                    expMonth: latestCard?.exp_month || '**',
+                    expYear: latestCard?.exp_year || '**',
                     status: statusLabel,
                     renewalDate: periodEnd ? new Date(periodEnd).toLocaleDateString('pt-BR') : '--/--/----',
                 });
+            } else if (customerCard) {
+                setStripeData((prev) => ({
+                    ...prev,
+                    cardBrand: customerCard?.brand || '****',
+                    cardLast4: customerCard?.last4 || '****',
+                    expMonth: customerCard?.exp_month || '**',
+                    expYear: customerCard?.exp_year || '**',
+                }));
             }
         };
 

@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 
 // Inicializar Firebase Admin
 if (!getApps().length) {
@@ -171,13 +171,41 @@ async function getRawBody(req: NextApiRequest): Promise<Buffer> {
   
           if (!userDocs.empty) {
             const userId = userDocs.docs[0].id;
-  
+
+            const expandedPaymentIntent = await stripe.paymentIntents.retrieve(paymentIntent.id, {
+              expand: ['latest_charge', 'payment_method'],
+            });
+
+            const expandedCharge = expandedPaymentIntent.latest_charge as Stripe.Charge | null;
+            const expandedMethod = expandedPaymentIntent.payment_method as Stripe.PaymentMethod | null;
+
+            const cardFromCharge = expandedCharge?.payment_method_details?.card;
+            const cardFromMethod =
+              expandedMethod?.type === 'card' ? expandedMethod.card : null;
+
+            const card = cardFromCharge || cardFromMethod;
+
+            if (card) {
+              await db.collection('customers').doc(userId).set(
+                {
+                  paymentMethod: {
+                    brand: card.brand || '',
+                    last4: card.last4 || '',
+                    exp_month: card.exp_month || null,
+                    exp_year: card.exp_year || null,
+                  },
+                  paymentMethodUpdatedAt: FieldValue.serverTimestamp(),
+                },
+                { merge: true }
+              );
+            }
+
             await db
               .collection('customers')
               .doc(userId)
               .collection('payments')
               .doc(paymentIntent.id)
-              .set(paymentIntent);
+              .set({ ...paymentIntent, card, created: paymentIntent.created });
           }
   
           console.log(`Pagamento registrado: ${paymentIntent.id}`);
