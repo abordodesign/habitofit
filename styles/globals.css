@@ -50,6 +50,29 @@ header{
 
 }
 
+.hero-gradient {
+  position: relative;
+  isolation: isolate;
+}
+
+.hero-gradient::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    #141414 0%,
+    #141414 3%,
+    hsla(0, 0%, 8%, 0.15) 15%,
+    hsla(0, 0%, 8%, 0.35) 29%,
+    hsla(0, 0%, 8%, 0.58) 44%,
+    rgba(223, 157, 192, 0.58) 68%,
+    #141414 100%
+  );
+}
+
 .loader-container {
   display: flex;
   justify-content: center;
@@ -222,5 +245,4 @@ header{
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
-
 
