@@ -99,6 +99,7 @@ service cloud.firestore {
 
 Crie um bucket chamado `avatars` e deixe publico.
 Para restringir por uid, o arquivo deve ser salvo como `{uid}.ext`.
+Para evitar cache antigo no avatar, o app adiciona um `?t=timestamp` na URL ao salvar.
 
 Exemplo de policies (SQL):
 
