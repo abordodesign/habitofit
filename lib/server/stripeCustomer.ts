@@ -10,7 +10,17 @@ export async function getStripeCustomerContext(
   req: NextApiRequest
 ): Promise<StripeCustomerContext> {
   const authHeader = req.headers.authorization || '';
-  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+  const headerToken = Array.isArray(req.headers['x-firebase-token'])
+    ? req.headers['x-firebase-token'][0]
+    : req.headers['x-firebase-token'];
+  const authToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+  const fallbackToken =
+    typeof headerToken === 'string' && headerToken.startsWith('Bearer ')
+      ? headerToken.slice(7)
+      : typeof headerToken === 'string'
+        ? headerToken
+        : '';
+  const token = authToken || fallbackToken;
   if (!token) {
     const error = new Error('Missing bearer token');
     (error as { statusCode?: number }).statusCode = 401;

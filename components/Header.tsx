@@ -161,7 +161,10 @@ function Header({
             if (!authReady || !user) return;
             try {
                 const token = await user.getIdToken(true);
-                const headers = { Authorization: `Bearer ${token}` };
+                const headers = {
+                    Authorization: `Bearer ${token}`,
+                    'X-Firebase-Token': token,
+                };
                 const [cardRes, expiryRes, statusRes, renewalRes, summaryRes] = await Promise.all([
                     fetch('/api/stripe/card', { headers }),
                     fetch('/api/stripe/expiry', { headers }),
