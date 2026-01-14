@@ -11,11 +11,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const { stripeCustomerId } = await getStripeCustomerContext(req);
     const summary = await getStripeSummary(stripeCustomerId);
-    return res.status(200).json(summary);
+    const card = summary.card;
+    return res.status(200).json({
+      brand: card?.brand || '',
+      last4: card?.last4 || '',
+    });
   } catch (error: any) {
     const statusCode = error?.statusCode || 500;
-    const message = error?.message || 'Failed to fetch Stripe data';
-    console.error('Stripe summary error:', error);
+    const message = error?.message || 'Failed to fetch Stripe card data';
+    console.error('Stripe card error:', error);
     return res.status(statusCode).json({ error: message });
   }
 }

@@ -139,44 +139,55 @@ function Header({
 
                 setStripeData((prev) => ({
                     ...prev,
-                    cardBrand: latestCard?.brand || '****',
-                    cardLast4: latestCard?.last4 || '****',
-                    expMonth: latestCard?.exp_month || '**',
-                    expYear: latestCard?.exp_year || '**',
-                    status: statusLabel,
-                    renewalDate: periodEnd ? new Date(periodEnd).toLocaleDateString('pt-BR') : '--/--/----',
+                    cardBrand: prev.cardBrand || latestCard?.brand || '****',
+                    cardLast4: prev.cardLast4 || latestCard?.last4 || '****',
+                    expMonth: prev.expMonth || latestCard?.exp_month || '**',
+                    expYear: prev.expYear || latestCard?.exp_year || '**',
+                    status: prev.status || statusLabel,
+                    renewalDate: prev.renewalDate || (periodEnd ? new Date(periodEnd).toLocaleDateString('pt-BR') : '--/--/----'),
                 }));
             } else if (customerCard) {
                 setStripeData((prev) => ({
                     ...prev,
-                    cardBrand: customerCard?.brand || '****',
-                    cardLast4: customerCard?.last4 || '****',
-                    expMonth: customerCard?.exp_month || '**',
-                    expYear: customerCard?.exp_year || '**',
+                    cardBrand: prev.cardBrand || customerCard?.brand || '****',
+                    cardLast4: prev.cardLast4 || customerCard?.last4 || '****',
+                    expMonth: prev.expMonth || customerCard?.exp_month || '**',
+                    expYear: prev.expYear || customerCard?.exp_year || '**',
                 }));
             }
         };
 
-        const fetchStripeSummary = async () => {
+        const fetchStripeDetails = async () => {
             if (!authReady || !user) return;
             try {
                 const token = await user.getIdToken(true);
-                const response = await fetch('/api/stripe-customer-summary', {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
-                if (!response.ok) return;
-                const data = await response.json();
+                const headers = { Authorization: `Bearer ${token}` };
+                const [cardRes, expiryRes, statusRes, renewalRes, summaryRes] = await Promise.all([
+                    fetch('/api/stripe/card', { headers }),
+                    fetch('/api/stripe/expiry', { headers }),
+                    fetch('/api/stripe/status', { headers }),
+                    fetch('/api/stripe/renewal', { headers }),
+                    fetch('/api/stripe-customer-summary', { headers }),
+                ]);
+
+                const [cardData, expiryData, statusData, renewalData, summaryData] = await Promise.all([
+                    cardRes.ok ? cardRes.json() : null,
+                    expiryRes.ok ? expiryRes.json() : null,
+                    statusRes.ok ? statusRes.json() : null,
+                    renewalRes.ok ? renewalRes.json() : null,
+                    summaryRes.ok ? summaryRes.json() : null,
+                ]);
+
+                const mappedStatus = statusData?.status ? mapStripeStatus(statusData.status) : '';
                 setStripeData((prev) => ({
                     ...prev,
-                    email: data?.email || prev.email || '',
-                    cardBrand: data?.card?.brand || prev.cardBrand || '****',
-                    cardLast4: data?.card?.last4 || prev.cardLast4 || '****',
-                    expMonth: data?.card?.expMonth || prev.expMonth || '**',
-                    expYear: data?.card?.expYear || prev.expYear || '**',
-                    status: mapStripeStatus(data?.status) || prev.status || '',
-                    renewalDate: data?.renewalDate || prev.renewalDate || '',
+                    email: summaryData?.email || prev.email || '',
+                    cardBrand: cardData?.brand || prev.cardBrand || '****',
+                    cardLast4: cardData?.last4 || prev.cardLast4 || '****',
+                    expMonth: expiryData?.expMonth ?? prev.expMonth ?? '**',
+                    expYear: expiryData?.expYear ?? prev.expYear ?? '**',
+                    status: mappedStatus || prev.status || '',
+                    renewalDate: renewalData?.renewalDate || prev.renewalDate || '',
                 }));
             } catch (error) {
                 console.error('Erro ao buscar dados do Stripe:', error);
@@ -185,7 +196,7 @@ function Header({
 
 
         fetchUserAndSubscription();
-        fetchStripeSummary();
+        fetchStripeDetails();
 
         const notiButton = document.querySelector('.noti');
         if (notiButton) notiButton.addEventListener('click', handleToggleNotification);
