@@ -81,10 +81,10 @@ async function getRawBody(req: NextApiRequest): Promise<Buffer> {
         const userId = session.client_reference_id || session.metadata?.userId;
         const stripeId = session.customer as string;
         const email = session.customer_details?.email;
-  
+
         if (!userId || !stripeId || !email) {
           console.error('Dados ausentes no evento:', { userId, stripeId, email });
-          return res.status(400).json({ error: 'Dados ausentes no evento' });
+          return res.status(200).json({ error: 'Dados ausentes no evento' });
         }
   
         try {
@@ -118,26 +118,41 @@ async function getRawBody(req: NextApiRequest): Promise<Buffer> {
       case 'customer.subscription.created':
       case 'customer.subscription.updated':
         const subscription = event.data.object as Stripe.Subscription;
-  
+
         try {
           const customerId = subscription.customer as string;
+          const metadataUserId = subscription.metadata?.userId;
+
+          if (metadataUserId) {
+            await db
+              .collection('customers')
+              .doc(metadataUserId)
+              .collection('subscriptions')
+              .doc(subscription.id)
+              .set(subscription);
+            console.log(`Assinatura registrada: ${subscription.id}`);
+            break;
+          }
+
           const userDocs = await db
             .collection('customers')
             .where('stripeId', '==', customerId)
             .get();
-  
+
           if (!userDocs.empty) {
             const userId = userDocs.docs[0].id;
-  
+
             await db
               .collection('customers')
               .doc(userId)
               .collection('subscriptions')
               .doc(subscription.id)
               .set(subscription);
+            console.log(`Assinatura registrada: ${subscription.id}`);
+          } else {
+            console.log('Usuario nao encontrado para customerId:', customerId);
+            return res.status(200).send('Usuario nao encontrado');
           }
-  
-          console.log(`Assinatura registrada: ${subscription.id}`);
         } catch (error) {
           console.error('Erro ao salvar assinatura no Firestore:', error);
           return res.status(500).json({ error: 'Erro ao salvar assinatura no Firestore.' });

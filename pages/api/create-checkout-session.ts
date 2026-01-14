@@ -50,6 +50,11 @@ export default async function handler(
       ],
       customer_email: email, // Preenche automaticamente o e-mail do cliente
       client_reference_id: userId,
+      subscription_data: {
+        metadata: {
+          userId,
+        },
+      },
       success_url: `${baseUrl}/`,
       cancel_url: `${baseUrl}/`,
       metadata: {
