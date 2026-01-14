@@ -157,7 +157,7 @@ function Header({
             }
         };
 
-        const fetchStripeDetails = async () => {
+        const fetchStripeSummary = async () => {
             if (!authReady || !user) return;
             try {
                 const token = await user.getIdToken(true);
@@ -165,32 +165,18 @@ function Header({
                     Authorization: `Bearer ${token}`,
                     'X-Firebase-Token': token,
                 };
-                const [cardRes, expiryRes, statusRes, renewalRes, summaryRes] = await Promise.all([
-                    fetch('/api/stripe/card', { headers }),
-                    fetch('/api/stripe/expiry', { headers }),
-                    fetch('/api/stripe/status', { headers }),
-                    fetch('/api/stripe/renewal', { headers }),
-                    fetch('/api/stripe-customer-summary', { headers }),
-                ]);
-
-                const [cardData, expiryData, statusData, renewalData, summaryData] = await Promise.all([
-                    cardRes.ok ? cardRes.json() : null,
-                    expiryRes.ok ? expiryRes.json() : null,
-                    statusRes.ok ? statusRes.json() : null,
-                    renewalRes.ok ? renewalRes.json() : null,
-                    summaryRes.ok ? summaryRes.json() : null,
-                ]);
-
-                const mappedStatus = statusData?.status ? mapStripeStatus(statusData.status) : '';
+                const response = await fetch('/api/stripe-customer-summary', { headers });
+                if (!response.ok) return;
+                const data = await response.json();
                 setStripeData((prev) => ({
                     ...prev,
-                    email: summaryData?.email || prev.email || '',
-                    cardBrand: cardData?.brand || prev.cardBrand || '****',
-                    cardLast4: cardData?.last4 || prev.cardLast4 || '****',
-                    expMonth: expiryData?.expMonth ?? prev.expMonth ?? '**',
-                    expYear: expiryData?.expYear ?? prev.expYear ?? '**',
-                    status: mappedStatus || prev.status || '',
-                    renewalDate: renewalData?.renewalDate || prev.renewalDate || '',
+                    email: data?.email || prev.email || '',
+                    cardBrand: data?.card?.brand || prev.cardBrand || '****',
+                    cardLast4: data?.card?.last4 || prev.cardLast4 || '****',
+                    expMonth: data?.card?.expMonth || prev.expMonth || '**',
+                    expYear: data?.card?.expYear || prev.expYear || '**',
+                    status: mapStripeStatus(data?.status) || prev.status || '',
+                    renewalDate: data?.renewalDate || prev.renewalDate || '',
                 }));
             } catch (error) {
                 console.error('Erro ao buscar dados do Stripe:', error);
@@ -199,7 +185,7 @@ function Header({
 
 
         fetchUserAndSubscription();
-        fetchStripeDetails();
+        fetchStripeSummary();
 
         const notiButton = document.querySelector('.noti');
         if (notiButton) notiButton.addEventListener('click', handleToggleNotification);
