@@ -46,7 +46,7 @@ async function getRawBody(req: NextApiRequest): Promise<Buffer> {
   export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method !== 'POST') {
       res.setHeader('Allow', 'POST');
-      return res.status(405).send('Método não permitido');
+      return res.status(200).send('OK');
     }
   
     const sig = req.headers['stripe-signature'];
@@ -175,3 +175,5 @@ async function getRawBody(req: NextApiRequest): Promise<Buffer> {
   
     res.status(200).send('Evento processado com sucesso.');
   }
+
+
