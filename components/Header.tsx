@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import useAuth from '@/hooks/useAuth';
 import { auth, db } from '@/firebase';
-import { collection, doc, getDocs, serverTimestamp, setDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, serverTimestamp, setDoc } from 'firebase/firestore';
 import { updatePassword, updateProfile } from 'firebase/auth';
 import { supabase } from '@/lib/supabase';
 
@@ -27,6 +27,7 @@ function Header({
     const [editPhoto, setEditPhoto] = useState<File | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [saveError, setSaveError] = useState('');
+    const [avatarUrl, setAvatarUrl] = useState<string>('');
 
     const { logout } = useAuth();
 
@@ -78,8 +79,15 @@ function Header({
             if (!user) return;
 
             const uid = user.uid;
-            setUserData({ name: user.displayName || '', email: user.email || '' });
-            setEditName(user.displayName || '');
+            const userDoc = await getDoc(doc(db, 'users', uid));
+            const profile = userDoc.exists() ? userDoc.data() : null;
+
+            const resolvedName = profile?.name || user.displayName || '';
+            const resolvedPhoto = profile?.photoURL || user.photoURL || '';
+
+            setUserData({ name: resolvedName, email: user.email || '' });
+            setEditName(resolvedName);
+            setAvatarUrl(resolvedPhoto);
 
 
             const subSnap = await getDocs(collection(db, 'customers', uid, 'subscriptions'));
@@ -170,7 +178,14 @@ function Header({
             }
 
             if (editPassword.trim()) {
-                await updatePassword(currentUser, editPassword.trim());
+                try {
+                    await updatePassword(currentUser, editPassword.trim());
+                } catch (passwordError: any) {
+                    if (passwordError?.code === 'auth/requires-recent-login') {
+                        throw new Error('Faça login novamente para alterar a senha.');
+                    }
+                    throw passwordError;
+                }
             }
 
             await setDoc(
@@ -186,10 +201,11 @@ function Header({
 
             setDisplayName(nextName || currentUser.displayName || 'Usuário');
             setUserData((prev) => ({ ...prev, name: nextName || prev.name }));
+            setAvatarUrl(photoURL || currentUser.photoURL || '');
             setModalView('config');
         } catch (error: any) {
             console.error('Erro ao salvar configurações:', error);
-            setSaveError('Não foi possível salvar as alterações.');
+            setSaveError(error?.message || 'Não foi possível salvar as alterações.');
         } finally {
             setIsSaving(false);
         }
@@ -235,7 +251,7 @@ function Header({
                     {/* Avatar continua abrindo o modal completo */}
                     <img
                         onClick={() => setShowUserMenu(!showUserMenu)}
-                        src="Avatar.svg"
+                        src={avatarUrl || 'Avatar.svg'}
                         alt="Avatar"
                         className="cursor-pointer rounded-full h-8 w-8"
                     />
