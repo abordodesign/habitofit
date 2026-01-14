@@ -31,7 +31,7 @@ function Row({ title, series }: Props) {
 
   return (
     <div className="space-y-1 md:space-y-3 pl-20">
-      <h2 className="cursor-pointer text-base font-bold text-white transition duration-200 hover:text-white md:text-3xl">
+      <h2 className="sectionTitle cursor-pointer text-base text-white transition duration-200 hover:text-white md:text-3xl">
         {title}
       </h2>
 

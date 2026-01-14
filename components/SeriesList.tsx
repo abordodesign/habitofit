@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import Row from './Row'
 import { auth, buscarSeriesFavoritas } from '@/firebase'
@@ -23,7 +23,7 @@ const SeriesList = ({ mostrarFavoritas }: { mostrarFavoritas: boolean }) => {
     const fetchSeries = async () => {
       const { data, error } = await supabase.from('series').select('*')
       if (error) {
-        console.error('Erro ao buscar séries:', error)
+        console.error('Erro ao buscar series:', error)
         return
       }
 
@@ -41,17 +41,33 @@ const SeriesList = ({ mostrarFavoritas }: { mostrarFavoritas: boolean }) => {
     }
 
     fetchSeries()
-    
   }, [mostrarFavoritas])
 
-  if (loading) return <p className="text-center text-white">Carregando séries...</p>
+  if (loading) return <p className="text-center text-white">Carregando series...</p>
 
   return (
-    <div className="pt-14">
+    <div className="pt-14 space-y-10">
       <Row
-        title={mostrarFavoritas ? "Minhas Séries Favoritas" : "Séries em Destaque"}
+        title={mostrarFavoritas ? "Minhas Series Favoritas" : "Aulas Gravadas - Mais populares"}
         series={mostrarFavoritas ? favoritas : series}
       />
+      {!mostrarFavoritas && (
+        <section className="pl-20">
+          <h3 className="sectionTitle text-white text-base md:text-2xl">
+            Parceiros Exclusivos da Habito FIT
+          </h3>
+          <div className="mt-4 flex items-center gap-8 overflow-x-auto scrollbar-hide py-2">
+            {Array.from({ length: 7 }).map((_, index) => (
+              <div
+                key={`logo-parceiro-${index}`}
+                className="flex h-16 min-w-[160px] items-center justify-center rounded-md bg-black/40 px-6"
+              >
+                <img src="/logo-parceiro-1.svg" alt="Logo parceiro" className="max-h-10 w-auto" />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   )
 }
