@@ -3,8 +3,10 @@ import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import useAuth from '@/hooks/useAuth';
-import { auth, db } from '@/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { auth, db, storage } from '@/firebase';
+import { collection, doc, getDocs, serverTimestamp, setDoc } from 'firebase/firestore';
+import { updatePassword, updateProfile } from 'firebase/auth';
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 
 
 function Header({
@@ -20,6 +22,11 @@ function Header({
     const dropdownRef = useRef<HTMLDivElement>(null);
     const [displayName, setDisplayName] = useState<string>('Usuário');
     const [modalView, setModalView] = useState<'config' | 'editAccount'>('config');
+    const [editName, setEditName] = useState('');
+    const [editPassword, setEditPassword] = useState('');
+    const [editPhoto, setEditPhoto] = useState<File | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
+    const [saveError, setSaveError] = useState('');
 
     const { logout } = useAuth();
 
@@ -72,6 +79,7 @@ function Header({
 
             const uid = user.uid;
             setUserData({ name: user.displayName || '', email: user.email || '' });
+            setEditName(user.displayName || '');
 
 
             const subSnap = await getDocs(collection(db, 'customers', uid, 'subscriptions'));
@@ -115,6 +123,65 @@ function Header({
             if (notiButton) notiButton.removeEventListener('click', handleToggleNotification);
         };
     }, []);
+
+    const handleSaveAccount = async () => {
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+            setSaveError('Usuário não autenticado.');
+            return;
+        }
+
+        setIsSaving(true);
+        setSaveError('');
+
+        try {
+            let photoURL = currentUser.photoURL || '';
+
+            if (editPhoto) {
+                const avatarRef = ref(storage, `avatars/${currentUser.uid}`);
+                await uploadBytes(avatarRef, editPhoto);
+                photoURL = await getDownloadURL(avatarRef);
+            }
+
+            const nextName = editName.trim();
+            const profileUpdates: { displayName?: string; photoURL?: string } = {};
+
+            if (nextName) {
+                profileUpdates.displayName = nextName;
+            }
+            if (photoURL) {
+                profileUpdates.photoURL = photoURL;
+            }
+
+            if (Object.keys(profileUpdates).length) {
+                await updateProfile(currentUser, profileUpdates);
+            }
+
+            if (editPassword.trim()) {
+                await updatePassword(currentUser, editPassword.trim());
+            }
+
+            await setDoc(
+                doc(db, 'users', currentUser.uid),
+                {
+                    name: nextName || currentUser.displayName || '',
+                    email: currentUser.email || '',
+                    photoURL: photoURL || currentUser.photoURL || '',
+                    updatedAt: serverTimestamp(),
+                },
+                { merge: true }
+            );
+
+            setDisplayName(nextName || currentUser.displayName || 'Usuário');
+            setUserData((prev) => ({ ...prev, name: nextName || prev.name }));
+            setModalView('config');
+        } catch (error: any) {
+            console.error('Erro ao salvar configurações:', error);
+            setSaveError('Não foi possível salvar as alterações.');
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
 
 
@@ -186,6 +253,8 @@ function Header({
                                                         setModalView('editAccount');
                                                         setShowUserMenu(true);
                                                         setShowDropdownMenu(false);
+                                                        setSaveError('');
+                                                        setEditPassword('');
                                                     }}
                                                     className="block w-full px-4 py-3 text-left text-white hover:bg-[#DF9DC0]/30"
                                                 >
@@ -231,24 +300,51 @@ function Header({
                                             {/* Upload de imagem */}
                                             <div>
                                                 <label className="block mb-1 text-gray-300">Foto de Perfil</label>
-                                                <input type="file" accept="image/*" className="w-full bg-[#2a2a2a] text-white p-2 rounded" />
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    className="w-full bg-[#2a2a2a] text-white p-2 rounded"
+                                                    onChange={(event) => setEditPhoto(event.target.files?.[0] || null)}
+                                                />
                                             </div>
 
                                             {/* Nome */}
                                             <div>
                                                 <label className="block mb-1 text-gray-300">Nome</label>
-                                                <input type="text" placeholder="Seu nome" className="w-full bg-[#2a2a2a] text-white p-2 rounded" />
+                                                <input
+                                                    type="text"
+                                                    placeholder="Seu nome"
+                                                    className="w-full bg-[#2a2a2a] text-white p-2 rounded"
+                                                    value={editName}
+                                                    onChange={(event) => setEditName(event.target.value)}
+                                                />
                                             </div>
 
                                             {/* Senha */}
                                             <div>
                                                 <label className="block mb-1 text-gray-300">Nova Senha</label>
-                                                <input type="password" placeholder="Nova senha" className="w-full bg-[#2a2a2a] text-white p-2 rounded" />
+                                                <input
+                                                    type="password"
+                                                    placeholder="Nova senha"
+                                                    className="w-full bg-[#2a2a2a] text-white p-2 rounded"
+                                                    value={editPassword}
+                                                    onChange={(event) => setEditPassword(event.target.value)}
+                                                />
                                             </div>
+
+                                            {saveError && (
+                                                <p className="text-sm text-red-400">{saveError}</p>
+                                            )}
 
                                             <div className="flex justify-end space-x-2 mt-4">
                                                 <button onClick={() => setModalView('config')} className="px-4 py-2 rounded bg-gray-600 text-white">Voltar</button>
-                                                <button className="px-4 py-2 rounded bg-[#DF9DC0] text-black font-semibold">Salvar Alterações</button>
+                                                <button
+                                                    onClick={handleSaveAccount}
+                                                    className="px-4 py-2 rounded bg-[#DF9DC0] text-black font-semibold disabled:opacity-60"
+                                                    disabled={isSaving}
+                                                >
+                                                    {isSaving ? 'Salvando...' : 'Salvar Alterações'}
+                                                </button>
                                             </div>
                                         </div>
                                     </>
