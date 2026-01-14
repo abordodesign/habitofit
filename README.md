@@ -36,6 +36,7 @@ Variaveis de ambiente necessarias (Vercel e local):
 - `FIREBASE_ADMIN_PROJECT_ID`
 - `FIREBASE_ADMIN_CLIENT_EMAIL`
 - `FIREBASE_ADMIN_PRIVATE_KEY` (cole a chave com `\n` para quebras de linha)
+- ou `FIREBASE_ADMIN_PRIVATE_KEY_BASE64` (alternativa segura para evitar erro de quebra de linha)
 
 Sem essas variaveis, o webhook nao consegue salvar a assinatura e o usuario volta para "Escolha seu plano".
 

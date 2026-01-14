@@ -7,11 +7,15 @@ import { getFirestore } from 'firebase-admin/firestore';
 if (!getApps().length) {
   const firebaseProjectId = process.env.FIREBASE_ADMIN_PROJECT_ID;
   const firebaseClientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
-  const firebasePrivateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n');
+  const privateKeyBase64 = process.env.FIREBASE_ADMIN_PRIVATE_KEY_BASE64;
+  const firebasePrivateKey =
+    privateKeyBase64
+      ? Buffer.from(privateKeyBase64, 'base64').toString('utf8')
+      : process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n');
 
   if (!firebaseProjectId || !firebaseClientEmail || !firebasePrivateKey) {
     throw new Error(
-      'Missing Firebase Admin env vars: FIREBASE_ADMIN_PROJECT_ID, FIREBASE_ADMIN_CLIENT_EMAIL, FIREBASE_ADMIN_PRIVATE_KEY'
+      'Missing Firebase Admin env vars: FIREBASE_ADMIN_PROJECT_ID, FIREBASE_ADMIN_CLIENT_EMAIL, FIREBASE_ADMIN_PRIVATE_KEY or FIREBASE_ADMIN_PRIVATE_KEY_BASE64'
     );
   }
 
