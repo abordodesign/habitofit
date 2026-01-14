@@ -22,6 +22,23 @@ The `pages/api` directory is mapped to `/api/*`. Files in this directory are tre
 
 This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
 
+## Stripe Webhook + Firebase Admin
+
+Para liberar o acesso apos o pagamento, o webhook do Stripe grava a assinatura no Firestore.
+
+Configurar no Stripe:
+- Endpoint: `https://SEU_DOMINIO.vercel.app/api/webhook`
+- Eventos: `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`
+- Copie o Signing secret para `NEXT_WEBHOOK_SECRET`
+
+Variaveis de ambiente necessarias (Vercel e local):
+- `NEXT_WEBHOOK_SECRET`
+- `FIREBASE_ADMIN_PROJECT_ID`
+- `FIREBASE_ADMIN_CLIENT_EMAIL`
+- `FIREBASE_ADMIN_PRIVATE_KEY` (cole a chave com `\n` para quebras de linha)
+
+Sem essas variaveis, o webhook nao consegue salvar a assinatura e o usuario volta para "Escolha seu plano".
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
