@@ -137,14 +137,15 @@ function Header({
                 const latestCharge = latestPayment?.charges?.data?.[0]?.payment_method_details?.card;
                 const latestCard = latestPayment?.card || latestCharge || customerCard;
 
-                setStripeData({
+                setStripeData((prev) => ({
+                    ...prev,
                     cardBrand: latestCard?.brand || '****',
                     cardLast4: latestCard?.last4 || '****',
                     expMonth: latestCard?.exp_month || '**',
                     expYear: latestCard?.exp_year || '**',
                     status: statusLabel,
                     renewalDate: periodEnd ? new Date(periodEnd).toLocaleDateString('pt-BR') : '--/--/----',
-                });
+                }));
             } else if (customerCard) {
                 setStripeData((prev) => ({
                     ...prev,
