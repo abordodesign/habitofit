@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { collection, onSnapshot, query, where } from 'firebase/firestore'
+import { collection, onSnapshot } from 'firebase/firestore'
 import { db } from '@/firebase'
 import useAuth from './useAuth'
 
@@ -14,15 +14,16 @@ function useSubscription() {
       return
     }
 
-    const q = query(
-      collection(db, 'customers', user.uid, 'subscriptions'),
-      where('status', '==', 'active')
-    )
+    const ref = collection(db, 'customers', user.uid, 'subscriptions')
+    const allowedStatuses = new Set(['active', 'trialing', 'incomplete'])
 
     const unsubscribe = onSnapshot(
-      q,
+      ref,
       (snapshot) => {
-        setHasSubscription(!snapshot.empty)
+        const hasAllowedStatus = snapshot.docs.some(
+          (doc) => allowedStatuses.has(doc.data().status)
+        )
+        setHasSubscription(hasAllowedStatus)
       },
       (error) => {
         console.error('Erro ao verificar status da assinatura:', error)
