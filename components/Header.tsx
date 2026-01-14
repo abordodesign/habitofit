@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import useAuth from '@/hooks/useAuth';
 import { auth, db } from '@/firebase';
-import { collection, doc, getDocs, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore';
+import { collection, doc, getDocs, limit, onSnapshot, orderBy, query, serverTimestamp, setDoc } from 'firebase/firestore';
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword, updateProfile } from 'firebase/auth';
 import { supabase } from '@/lib/supabase';
 
@@ -94,7 +94,13 @@ function Header({
             });
 
 
-            const subSnap = await getDocs(collection(db, 'customers', uid, 'subscriptions'));
+            const subSnap = await getDocs(
+                query(
+                    collection(db, 'customers', uid, 'subscriptions'),
+                    orderBy('current_period_end', 'desc'),
+                    limit(1)
+                )
+            );
             if (!subSnap.empty) {
                 const subscription = subSnap.docs[0].data();
 
@@ -102,10 +108,19 @@ function Header({
                     ? subscription.current_period_end.seconds * 1000
                     : subscription.current_period_end?.toDate()?.getTime();
 
-                const isActive = periodEnd && periodEnd > Date.now();
+                const normalizedStatus = String(subscription.status || '').toLowerCase();
+                const isActive = normalizedStatus
+                    ? ['active', 'trialing', 'past_due'].includes(normalizedStatus)
+                    : !!(periodEnd && periodEnd > Date.now());
                 const statusLabel = isActive ? 'Ativa' : 'Inativa';
 
-                const paymentSnap = await getDocs(collection(db, 'customers', uid, 'payments'));
+                const paymentSnap = await getDocs(
+                    query(
+                        collection(db, 'customers', uid, 'payments'),
+                        orderBy('created', 'desc'),
+                        limit(1)
+                    )
+                );
                 const latestCharge = paymentSnap.docs[0]?.data()?.charges?.data?.[0]?.payment_method_details?.card;
 
                 setStripeData({
