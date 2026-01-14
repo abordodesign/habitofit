@@ -47,7 +47,7 @@ const SeriesList = ({ mostrarFavoritas }: { mostrarFavoritas: boolean }) => {
   if (loading) return <p className="text-center text-white">Carregando séries...</p>
 
   return (
-    <div className="pt-10">
+    <div className="pt-14">
       <Row
         title={mostrarFavoritas ? "Minhas Séries Favoritas" : "Séries em Destaque"}
         series={mostrarFavoritas ? favoritas : series}

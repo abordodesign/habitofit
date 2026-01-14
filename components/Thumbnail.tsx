@@ -13,7 +13,7 @@ function Thumbnail({ serie }: Props) {
 
   return (
     <div
-      className="relative h-[268px] min-w-[216px] cursor-pointer transition duration-200 ease-out md:h-[268px] md:min-w-[216px] md:hover:scale-105"
+      className="relative h-[320px] min-w-[250px] cursor-pointer transition duration-200 ease-out md:h-[360px] md:min-w-[290px] md:hover:scale-105"
       onClick={() => {
         console.log('Thumbnail clicado')
         setCurrentSerie(serie)

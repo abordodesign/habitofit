@@ -30,14 +30,14 @@ function Row({ title, series }: Props) {
   }
 
   return (
-    <div className="space-y-0.5 md:space-y-2 pl-20">
-      <h2 className="cursor-pointer text-sm font-bold text-white transition duration-200 hover:text-white md:text-2xl">
+    <div className="space-y-1 md:space-y-3 pl-20">
+      <h2 className="cursor-pointer text-base font-bold text-white transition duration-200 hover:text-white md:text-3xl">
         {title}
       </h2>
 
-      <div className="group relative md:-ml-2">
+      <div className="group relative md:-ml-3">
         <ChevronLeftIcon
-          className={`absolute top-0 bottom-0 left-2 z-40 m-auto h-12 w-12 cursor-pointer opacity-0 transition hover:scale-125 group-hover:opacity-100 ${
+          className={`absolute top-0 bottom-0 left-2 z-40 m-auto h-14 w-14 cursor-pointer opacity-0 transition hover:scale-125 group-hover:opacity-100 ${
             !isMoved && "hidden"
           }`}
           onClick={() => handleClick("left")}
@@ -45,7 +45,7 @@ function Row({ title, series }: Props) {
 
         <div
           ref={rowRef}
-          className="flex scrollbar-hide items-center space-x-0.5 overflow-x-scroll md:space-x-2.5 md:p-2"
+          className="flex scrollbar-hide items-center space-x-2 overflow-x-scroll md:space-x-4 md:p-3"
         >
           {series.map((serie) => (
             <Thumbnail key={serie.id} serie={serie} />
@@ -53,7 +53,7 @@ function Row({ title, series }: Props) {
         </div>
 
         <ChevronRightIcon
-          className="absolute top-0 bottom-0 right-2 z-40 m-auto h-12 w-12 cursor-pointer opacity-0 transition hover:scale-125 group-hover:opacity-100"
+          className="absolute top-0 bottom-0 right-2 z-40 m-auto h-14 w-14 cursor-pointer opacity-0 transition hover:scale-125 group-hover:opacity-100"
           onClick={() => handleClick("right")}
         />
       </div>
