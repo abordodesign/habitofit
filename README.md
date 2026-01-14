@@ -148,3 +148,17 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+
+## Registro de Alteracoes - 2026-01-14 01:48 (BRT - Belo Horizonte)
+
+Nome: Codex
+
+Resumo do trabalho
+- Ajustes no perfil para atualizar nome e avatar (Supabase) com cache-buster.
+- Leitura de dados do Stripe via Firestore com ordenacao para pegar os registros mais recentes.
+- Webhook do Stripe atualizado para salvar dados reais de cartao no Firestore.
+- Nova rota `pages/api/stripe-customer-summary.ts` para buscar resumo direto no Stripe.
+- Integracao do resumo do Stripe no header para exibir dados reais no painel.
+
+Rollback aplicado
+- Removido portal do Stripe para atualizar cartao (revert para o estado de `a781dc7`).
