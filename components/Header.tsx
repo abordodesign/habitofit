@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import useAuth from '@/hooks/useAuth';
 import { auth, db } from '@/firebase';
-import { collection, doc, getDoc, getDocs, serverTimestamp, setDoc } from 'firebase/firestore';
+import { collection, doc, getDocs, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore';
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword, updateProfile } from 'firebase/auth';
 import { supabase } from '@/lib/supabase';
 
@@ -75,20 +75,23 @@ function Header({
             notificationModule.toggleNotification();
         };
 
+        let unsubscribeProfile: undefined | (() => void);
+
         const fetchUserAndSubscription = async () => {
             if (!authReady || !user) return;
 
             const uid = user.uid;
-            const userDoc = await getDoc(doc(db, 'users', uid));
-            const profile = userDoc.exists() ? userDoc.data() : null;
+            const userRef = doc(db, 'users', uid);
+            unsubscribeProfile = onSnapshot(userRef, (snap) => {
+                const profile = snap.exists() ? snap.data() : null;
+                const resolvedName = profile?.name || user.displayName || '';
+                const resolvedPhoto = profile?.photoURL || user.photoURL || '';
 
-            const resolvedName = profile?.name || user.displayName || '';
-            const resolvedPhoto = profile?.photoURL || user.photoURL || '';
-
-            setUserData({ name: resolvedName, email: user.email || '' });
-            setEditName(resolvedName);
-            setAvatarUrl(resolvedPhoto);
-            setDisplayName(resolvedName || 'Usuário');
+                setUserData({ name: resolvedName, email: user.email || '' });
+                setEditName(resolvedName);
+                setAvatarUrl(resolvedPhoto);
+                setDisplayName(resolvedName || 'Usuário');
+            });
 
 
             const subSnap = await getDocs(collection(db, 'customers', uid, 'subscriptions'));
@@ -130,6 +133,9 @@ function Header({
 
         return () => {
             if (notiButton) notiButton.removeEventListener('click', handleToggleNotification);
+            if (unsubscribeProfile) {
+                unsubscribeProfile();
+            }
         };
     }, [authReady, user]);
 
