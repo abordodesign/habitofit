@@ -91,7 +91,7 @@ const SeriesList = ({ mostrarFavoritas }: { mostrarFavoritas: boolean }) => {
   return (
     <div className="pt-14 space-y-10">
       <Row
-        title={mostrarFavoritas ? "Minhas Series Favoritas" : "Aulas Gravadas - Mais populares"}
+        title={mostrarFavoritas ? "Serie Favoritas" : "Aulas Gravadas - Mais populares"}
         series={mostrarFavoritas ? favoritas : seriesComTemporadas}
       />
       {!mostrarFavoritas && (
