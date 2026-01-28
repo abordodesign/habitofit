@@ -88,11 +88,15 @@ const SeriesList = ({ mostrarFavoritas }: { mostrarFavoritas: boolean }) => {
       ]
     : series
 
+  const favoritosParaExibir = seriesComTemporadas.filter((serie) =>
+    favoritosIds.includes(String(serie.id))
+  )
+
   return (
     <div className="pt-14 space-y-10">
       <Row
         title={mostrarFavoritas ? "Serie Favoritas" : "Aulas Gravadas - Mais populares"}
-        series={mostrarFavoritas ? favoritas : seriesComTemporadas}
+        series={mostrarFavoritas ? favoritosParaExibir : seriesComTemporadas}
       />
       {!mostrarFavoritas && (
         <section className="pl-20">
