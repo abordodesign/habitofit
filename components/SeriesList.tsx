@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import Row from './Row'
-import { db } from '@/firebase'
-import { collection, onSnapshot, query, where } from 'firebase/firestore'
+import { buscarSeriesFavoritas } from '@/firebase'
 import useAuth from '@/hooks/useAuth'
 
 
@@ -41,19 +40,25 @@ const SeriesList = ({ mostrarFavoritas }: { mostrarFavoritas: boolean }) => {
   }, [mostrarFavoritas])
 
   useEffect(() => {
-    if (!user?.uid) {
-      setFavoritosIds([])
-      return
+    let isActive = true
+
+    const carregarFavoritos = async () => {
+      if (!user?.uid) {
+        setFavoritosIds([])
+        return
+      }
+
+      const ids = await buscarSeriesFavoritas(user.uid)
+      if (!isActive) return
+      setFavoritosIds(ids.map((id) => String(id)))
     }
 
-    const q = query(collection(db, "favoritos"), where("userId", "==", user.uid))
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const ids = snapshot.docs.map((doc) => String(doc.data().serieId))
-      setFavoritosIds(ids)
-    })
+    carregarFavoritos()
 
-    return () => unsubscribe()
-  }, [user?.uid])
+    return () => {
+      isActive = false
+    }
+  }, [user?.uid, mostrarFavoritas])
 
   useEffect(() => {
     if (!favoritosIds.length) {
