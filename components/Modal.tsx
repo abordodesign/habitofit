@@ -223,17 +223,6 @@ function Modal() {
     { key: "temporada-1", titulo: "Temporada 1" },
     { key: "temporada-2", titulo: "Temporada 2" },
   ]
-  const episodioBase = episodios[0]
-  const episodiosComTemporadas = episodioBase
-    ? [
-        ...episodios,
-        ...Array.from({ length: 10 }).map((_, index) => ({
-          ...episodioBase,
-          id: `temporada-extra-${index + 1}`,
-          nome: `Nova Temporada ${index + 1}`,
-        })),
-      ]
-    : episodios
 
   return (
     <MuiModal open={showModal} onClose={handleClose} className="fixed !top-7 left-0 right-0 z-50 mx-auto w-full max-w-5xl overflow-x-hidden rounded-md">
@@ -325,7 +314,7 @@ function Modal() {
                 ref={(el) => { sliderRefs.current[temporada.key] = el }}
                 className="flex overflow-x-auto space-x-6 px-12 scrollbar-hide snap-x snap-mandatory scroll-smooth py-4"
               >
-                {episodiosComTemporadas.map((ep) => {
+                {episodios.map((ep) => {
                   const isCurrent = ep.id === videoAtual.id
                   return (
                     <button
