@@ -239,11 +239,18 @@ export async function buscarNotaDoUsuario(userId: string, itemId: string, tipo: 
   }
 }
 
-export async function adicionarFavorito(userId: string, serieId: string) {
-  const docRef = doc(db, 'favoritos', `${userId}_${serieId}`)
+export async function adicionarFavorito(
+  userId: string,
+  serie: { id: string; nome?: string; descricao?: string; imagem?: string | null; rating?: number }
+) {
+  const docRef = doc(db, 'favoritos', `${userId}_${serie.id}`)
   await setDoc(docRef, {
     userId,
-    serieId,
+    serieId: serie.id,
+    nome: serie.nome ?? null,
+    descricao: serie.descricao ?? null,
+    imagem: serie.imagem ?? null,
+    rating: serie.rating ?? null,
   })
 }
 
@@ -267,6 +274,17 @@ export async function buscarSeriesFavoritas(userId: string): Promise<string[]> {
   } catch (error) {
     console.error("Erro ao buscar favoritos:", error)
     return [] 
+  }
+}
+
+export async function buscarFavoritosDetalhados(userId: string) {
+  try {
+    const q = query(collection(db, "favoritos"), where("userId", "==", userId))
+    const snapshot = await getDocs(q)
+    return snapshot.docs.map((doc) => doc.data())
+  } catch (error) {
+    console.error("Erro ao buscar favoritos detalhados:", error)
+    return []
   }
 }
 

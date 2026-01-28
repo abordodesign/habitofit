@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import Row from './Row'
-import { buscarSeriesFavoritas } from '@/firebase'
+import { buscarFavoritosDetalhados, buscarSeriesFavoritas } from '@/firebase'
 import useAuth from '@/hooks/useAuth'
 
 
@@ -20,6 +20,7 @@ const SeriesList = ({ mostrarFavoritas }: { mostrarFavoritas: boolean }) => {
   const [series, setSeries] = useState<Serie[]>([])
   const [favoritas, setFavoritas] = useState<Serie[]>([])
   const [favoritosIds, setFavoritosIds] = useState<string[]>([])
+  const [favoritosDetalhados, setFavoritosDetalhados] = useState<Serie[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -45,8 +46,23 @@ const SeriesList = ({ mostrarFavoritas }: { mostrarFavoritas: boolean }) => {
     const carregarFavoritos = async () => {
       if (!user?.uid) {
         setFavoritosIds([])
+        setFavoritosDetalhados([])
         return
       }
+
+      const detalhados = await buscarFavoritosDetalhados(user.uid)
+      if (!isActive) return
+      setFavoritosDetalhados(
+        detalhados.map((item: any) => ({
+          id: String(item.serieId),
+          nome: item.nome ?? 'Sem título',
+          descricao: item.descricao ?? '',
+          imagem: item.imagem ?? '/card.svg',
+          rating: Number(item.rating ?? 0),
+          categoria_id: null,
+          data_criacao: '',
+        }))
+      )
 
       const ids = await buscarSeriesFavoritas(user.uid)
       if (!isActive) return
@@ -85,9 +101,10 @@ const SeriesList = ({ mostrarFavoritas }: { mostrarFavoritas: boolean }) => {
       ]
     : series
 
-  const favoritosParaExibir = seriesComTemporadas.filter((serie) =>
-    favoritosIds.includes(String(serie.id))
-  )
+  const favoritosParaExibir =
+    favoritosDetalhados.length > 0
+      ? favoritosDetalhados
+      : seriesComTemporadas.filter((serie) => favoritosIds.includes(String(serie.id)))
 
   return (
     <div className="pt-14 space-y-10">

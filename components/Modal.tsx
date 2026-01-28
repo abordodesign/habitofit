@@ -204,7 +204,7 @@ function Modal() {
       setIsFavorito(false)
       toast.success('Removido dos favoritos');
     } else {
-      await adicionarFavorito(user.uid, currentSerie.id)
+      await adicionarFavorito(user.uid, currentSerie)
       setIsFavorito(true)
       toast.success('Adicionado aos favoritos')
     }
