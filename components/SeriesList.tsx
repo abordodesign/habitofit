@@ -52,21 +52,51 @@ const SeriesList = ({ mostrarFavoritas }: { mostrarFavoritas: boolean }) => {
 
       const detalhados = await buscarFavoritosDetalhados(user.uid)
       if (!isActive) return
-      setFavoritosDetalhados(
-        detalhados.map((item: any) => ({
-          id: String(item.serieId),
-          nome: item.nome ?? 'Sem título',
-          descricao: item.descricao ?? '',
-          imagem: item.imagem ?? '/card.svg',
-          rating: Number(item.rating ?? 0),
-          categoria_id: null,
-          data_criacao: '',
-        }))
-      )
+      const detalhadosMapeados = detalhados.map((item: any) => ({
+        id: String(item.serieId),
+        nome: item.nome ?? 'Sem título',
+        descricao: item.descricao ?? '',
+        imagem: item.imagem ?? '/card.svg',
+        rating: Number(item.rating ?? 0),
+        categoria_id: null,
+        data_criacao: '',
+      }))
 
       const ids = await buscarSeriesFavoritas(user.uid)
       if (!isActive) return
       setFavoritosIds(ids.map((id) => String(id)))
+
+      if (detalhadosMapeados.length > 0) {
+        setFavoritosDetalhados(detalhadosMapeados)
+        return
+      }
+
+      if (typeof window !== 'undefined') {
+        try {
+          const raw = window.localStorage.getItem('favoritos_cache')
+          const cache = raw ? JSON.parse(raw) : []
+          if (Array.isArray(cache) && cache.length > 0) {
+            setFavoritosDetalhados(
+              cache.map((item: any) => ({
+                id: String(item.serieId),
+                nome: item.nome ?? 'Sem título',
+                descricao: item.descricao ?? '',
+                imagem: item.imagem ?? '/card.svg',
+                rating: Number(item.rating ?? 0),
+                categoria_id: null,
+                data_criacao: '',
+              }))
+            )
+          } else {
+            setFavoritosDetalhados([])
+          }
+        } catch (error) {
+          console.error('Erro ao ler cache de favoritos:', error)
+          setFavoritosDetalhados([])
+        }
+      } else {
+        setFavoritosDetalhados([])
+      }
     }
 
     carregarFavoritos()
