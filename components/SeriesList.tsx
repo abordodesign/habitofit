@@ -45,11 +45,24 @@ const SeriesList = ({ mostrarFavoritas }: { mostrarFavoritas: boolean }) => {
 
   if (loading) return <p className="text-center text-white">Carregando series...</p>
 
+  const serieBase = series[0]
+  const seriesComTemporadas = serieBase
+    ? [
+        ...series,
+        ...Array.from({ length: 10 }).map((_, index) => ({
+          ...serieBase,
+          id: `temporada-extra-${index + 1}`,
+          nome: `Nova Temporada ${index + 1}`,
+          imagem: serieBase.imagem || "/card.svg",
+        })),
+      ]
+    : series
+
   return (
     <div className="pt-14 space-y-10">
       <Row
         title={mostrarFavoritas ? "Minhas Series Favoritas" : "Aulas Gravadas - Mais populares"}
-        series={mostrarFavoritas ? favoritas : series}
+        series={mostrarFavoritas ? favoritas : seriesComTemporadas}
       />
       {!mostrarFavoritas && (
         <section className="pl-20">
