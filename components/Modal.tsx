@@ -46,7 +46,7 @@ function Modal() {
   const [ocult, setOcult] = useState('flex')
   const modalContentRef = useRef<HTMLDivElement>(null)
   const playerContainerRef = useRef<HTMLDivElement>(null)
-  const sliderRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  const sliderRef = useRef<HTMLDivElement>(null)
 
   const handleClose = () => setShowModal(false)
 
@@ -63,20 +63,19 @@ function Modal() {
   //   }
   // }
 
-  const scrollSlider = (key: string, direction: 'left' | 'right') => {
-    const slider = sliderRefs.current[key]
-    if (!slider || episodios.length === 0) return
-    const scrollAmount = slider.clientWidth
+  const scrollSlider = (direction: 'left' | 'right') => {
+    if (!sliderRef.current || episodios.length === 0) return
+    const scrollAmount = sliderRef.current.clientWidth
     if (direction === 'left') {
-      slider.scrollLeft -= scrollAmount
+      sliderRef.current.scrollLeft -= scrollAmount
     } else {
       const isAtEnd =
-        slider.scrollLeft + slider.clientWidth >=
-        slider.scrollWidth
+        sliderRef.current.scrollLeft + sliderRef.current.clientWidth >=
+        sliderRef.current.scrollWidth
       if (isAtEnd) {
-        slider.scrollTo({ left: 0, behavior: 'smooth' })
+        sliderRef.current.scrollTo({ left: 0, behavior: 'smooth' })
       } else {
-        slider.scrollLeft += scrollAmount
+        sliderRef.current.scrollLeft += scrollAmount
       }
     }
   }
@@ -219,11 +218,6 @@ function Modal() {
 
   if (!currentSerie || !videoAtual) return null
 
-  const temporadas = [
-    { key: "temporada-1", titulo: "Temporada 1" },
-    { key: "temporada-2", titulo: "Temporada 2" },
-  ]
-
   return (
     <MuiModal open={showModal} onClose={handleClose} className="fixed !top-7 left-0 right-0 z-50 mx-auto w-full max-w-5xl overflow-x-hidden rounded-md">
       <>
@@ -303,63 +297,62 @@ function Modal() {
             Avaliar esta aula
           </button>
           {/* Slider Episódios */}
-          {temporadas.map((temporada) => (
-            <div key={temporada.key} className="relative group w-full overflow-hidden mt-10">
-              <h2 className="text-2xl font-bold uppercase text-white mb-4">{temporada.titulo}</h2>
-              <ChevronLeftIcon
-                onClick={() => scrollSlider(temporada.key, 'left')}
-                className="absolute left-0 top-1/2 -translate-y-1/2 z-20 h-10 w-10 text-white cursor-pointer bg-black/70 rounded-full hover:scale-110"
-              />
-              <div
-                ref={(el) => { sliderRefs.current[temporada.key] = el }}
-                className="flex overflow-x-auto space-x-6 px-12 scrollbar-hide snap-x snap-mandatory scroll-smooth py-4"
-              >
-                {episodios.map((ep) => {
-                  const isCurrent = ep.id === videoAtual.id
-                  return (
-                    <button
-                      key={ep.id}
-                      onClick={() => setVideoAtual(ep)}
-                      className={`snap-start transition-all duration-300 ease-in-out flex-shrink-0 rounded-lg ${isCurrent ? 'scale-110 w-[330px] h-[280px]' : 'w-[280px] h-[260px]'
-                        }`}
-                    >
-                      <div className="bg-[#2a2a2a] p-4 rounded-lg h-full flex flex-col justify-between overflow-hidden">
-                        <img src="/cardInside.svg" alt="" className="w-full rounded-lg mb-2 object-cover h-32" />
-                        <div className="text-left">
-                          <p className="text-[16px] font-semibold text-white">{ep.nome}</p>
-                          <p className="text-[14px] text-white line-clamp-2">{ep.subtitulo}</p>
-                          <div className="flex items-center gap-1 mt-2">
-                            {[1, 2, 3, 4, 5].map((value) => (
-                              <svg
-                                key={value}
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill={(mediasEpisodios[ep.id] || 0) >= value ? "#facc15" : "#4b5563"}
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                                className="h-4 w-4"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={1}
-                                  d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.518 4.674a1 1 0 00.95.69h4.907c.969 0 1.371 1.24.588 1.81l-3.97 2.883a1 0 00-.364 1.118l1.518 4.674c.3.921-.755 1.688-1.538 1.118l-3.97-2.883a1 0 00-1.175 0l-3.97 2.883c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 0 00-.364-1.118l-3.97-2.883c-.783-.57-.38-1.81.588-1.81h4.907a1 0 00.95-.69l1.518-4.674z"
-                                />
-                              </svg>
-                            ))}
-                            <span className="text-sm text-white ml-1">({(mediasEpisodios[ep.id] || 0).toFixed(1)})</span>
-                          </div>
+          <div className="relative group w-full overflow-hidden mt-10">
+            <h2 className="text-2xl font-bold uppercase text-white mb-4">Temporada 1</h2>
+            <ChevronLeftIcon
+              onClick={() => scrollSlider('left')}
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-20 h-10 w-10 text-white cursor-pointer bg-black/70 rounded-full hover:scale-110"
+            />
+            <div
+              ref={sliderRef}
+              className="flex overflow-x-auto space-x-6 px-12 scrollbar-hide snap-x snap-mandatory scroll-smooth py-4"
+            >
+              {episodios.map((ep) => {
+                const isCurrent = ep.id === videoAtual.id
+                return (
+                  <button
+                    key={ep.id}
+                    onClick={() => setVideoAtual(ep)}
+                    className={`snap-start transition-all duration-300 ease-in-out flex-shrink-0 rounded-lg ${isCurrent ? 'scale-110 w-[330px] h-[280px]' : 'w-[280px] h-[260px]'
+                      }`}
+                  >
+                    <div className="bg-[#2a2a2a] p-4 rounded-lg h-full flex flex-col justify-between overflow-hidden">
+                      <img src="/cardInside.svg" alt="" className="w-full rounded-lg mb-2 object-cover h-32" />
+                      <div className="text-left">
+                        <p className="text-[16px] font-semibold text-white">{ep.nome}</p>
+                        <p className="text-[14px] text-white line-clamp-2">{ep.subtitulo}</p>
+                        <div className="flex items-center gap-1 mt-2">
+                          {[1, 2, 3, 4, 5].map((value) => (
+                            <svg
+                              key={value}
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill={(mediasEpisodios[ep.id] || 0) >= value ? "#facc15" : "#4b5563"}
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              className="h-4 w-4"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={1}
+                                d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.518 4.674a1 1 0 00.95.69h4.907c.969 0 1.371 1.24.588 1.81l-3.97 2.883a1 1 0 00-.364 1.118l1.518 4.674c.3.921-.755 1.688-1.538 1.118l-3.97-2.883a1 1 0 00-1.175 0l-3.97 2.883c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.364-1.118l-3.97-2.883c-.783-.57-.38-1.81.588-1.81h4.907a1 1 0 00.95-.69l1.518-4.674z"
+                              />
+                            </svg>
+                          ))}
+                          <span className="text-sm text-white ml-1">({(mediasEpisodios[ep.id] || 0).toFixed(1)})</span>
                         </div>
                       </div>
-                    </button>
-                  )
-                })}
-              </div>
-              <ChevronRightIcon
-                onClick={() => scrollSlider(temporada.key, 'right')}
-                className="absolute right-0 top-1/2 -translate-y-1/2 z-20 h-10 w-10 text-white cursor-pointer bg-black/70 rounded-full hover:scale-110"
-              />
+                    </div>
+                  </button>
+                )
+              })}
             </div>
-          ))}
+            <ChevronRightIcon
+              onClick={() => scrollSlider('right')}
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-20 h-10 w-10 text-white cursor-pointer bg-black/70 rounded-full hover:scale-110"
+            />
+          </div>
+
           {episodioParaAvaliar && (
             <AvaliacaoEpisodioModal
               open={showRatingModal}
