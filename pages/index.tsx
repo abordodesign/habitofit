@@ -61,7 +61,9 @@ const Home = ({ products }: Props) => {
           </div>
           <div>
             <p>Desenvolvido por: HábitoFIT - CNPJ: 22.230.754/0001-70</p>
-            <p className='text-[#DF9DC0] mt-[8px] text-right'>Dúvidas? Fale Conosco</p>
+            <a href="mailto:contato@habitofit.com.br" className="block text-right">
+              <p className='text-[#DF9DC0] mt-[8px]'>Dúvidas? Fale Conosco</p>
+            </a>
           </div>
         </div>
       </footer>
