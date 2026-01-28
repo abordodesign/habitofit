@@ -1,7 +1,9 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import Row from './Row'
-import { auth, buscarSeriesFavoritas } from '@/firebase'
+import { auth, db } from '@/firebase'
+import { onAuthStateChanged } from 'firebase/auth'
+import { collection, onSnapshot, query, where } from 'firebase/firestore'
 
 
 type Serie = {
@@ -17,6 +19,8 @@ type Serie = {
 const SeriesList = ({ mostrarFavoritas }: { mostrarFavoritas: boolean }) => {
   const [series, setSeries] = useState<Serie[]>([])
   const [favoritas, setFavoritas] = useState<Serie[]>([])
+  const [favoritosIds, setFavoritosIds] = useState<string[]>([])
+  const [userId, setUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -30,18 +34,44 @@ const SeriesList = ({ mostrarFavoritas }: { mostrarFavoritas: boolean }) => {
       const todasSeries = data || []
       setSeries(todasSeries)
 
-      const user = auth.currentUser
-      if (user) {
-        const favoritosIds = await buscarSeriesFavoritas(user.uid)
-        const favoritasSeries = todasSeries.filter((serie) => favoritosIds.includes(serie.id))
-        setFavoritas(favoritasSeries)
-      }
-
       setLoading(false)
     }
 
     fetchSeries()
   }, [mostrarFavoritas])
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUserId(user?.uid ?? null)
+    })
+
+    return () => unsubscribe()
+  }, [])
+
+  useEffect(() => {
+    if (!userId) {
+      setFavoritosIds([])
+      return
+    }
+
+    const q = query(collection(db, "favoritos"), where("userId", "==", userId))
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const ids = snapshot.docs.map((doc) => String(doc.data().serieId))
+      setFavoritosIds(ids)
+    })
+
+    return () => unsubscribe()
+  }, [userId])
+
+  useEffect(() => {
+    if (!favoritosIds.length) {
+      setFavoritas([])
+      return
+    }
+
+    const favoritasSeries = series.filter((serie) => favoritosIds.includes(String(serie.id)))
+    setFavoritas(favoritasSeries)
+  }, [favoritosIds, series])
 
   if (loading) return <p className="text-center text-white">Carregando series...</p>
 
