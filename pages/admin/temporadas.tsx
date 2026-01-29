@@ -97,10 +97,10 @@ const AdminTemporadas = () => {
     setError('')
   }
 
-  const handleUpload = async () => {
+  const uploadImage = async () => {
     if (!uploadFile) {
       setUploadError('Selecione uma imagem para upload.')
-      return
+      return null
     }
 
     setUploading(true)
@@ -117,18 +117,25 @@ const AdminTemporadas = () => {
       console.error('Erro ao enviar imagem:', uploadError)
       setUploadError('Nao foi possivel enviar a imagem.')
       setUploading(false)
-      return
+      return null
     }
 
     const publicUrl = supabase.storage.from('series').getPublicUrl(data.path).data.publicUrl
-    const cacheBustedUrl = `${publicUrl}${publicUrl.includes('?') ? '&' : '?'}t=${Date.now()}`
-    setForm((prev) => ({ ...prev, imagem: cacheBustedUrl }))
-    setUploadPreview(cacheBustedUrl)
+    const previewUrl = `${publicUrl}${publicUrl.includes('?') ? '&' : '?'}t=${Date.now()}`
+    setUploadPreview(previewUrl)
+    setUploading(false)
+    return publicUrl
+  }
+
+  const handleUpload = async () => {
+    const publicUrl = await uploadImage()
+    if (!publicUrl) return
+    setForm((prev) => ({ ...prev, imagem: publicUrl }))
 
     if (form.id) {
       const { error: updateError } = await supabase
         .from('series')
-        .update({ imagem: cacheBustedUrl })
+        .update({ imagem: publicUrl })
         .eq('id', form.id)
       if (updateError) {
         console.error('Erro ao salvar imagem:', updateError)
@@ -137,7 +144,6 @@ const AdminTemporadas = () => {
         fetchSeries()
       }
     }
-    setUploading(false)
   }
 
   const handleSave = async () => {
@@ -149,10 +155,16 @@ const AdminTemporadas = () => {
     setSaving(true)
     setError('')
 
+    let imageUrl = form.imagem.trim() || null
+    if (!imageUrl && uploadFile) {
+      const uploaded = await uploadImage()
+      imageUrl = uploaded || null
+    }
+
     const payload = {
       nome: form.nome.trim(),
       descricao: form.descricao.trim(),
-      imagem: form.imagem.trim() || null,
+      imagem: imageUrl,
       rating: form.rating ? Number(form.rating) : null,
     }
 
