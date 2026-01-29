@@ -31,6 +31,7 @@ const AdminTemporadas = () => {
   const [uploading, setUploading] = useState(false)
   const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [uploadError, setUploadError] = useState('')
+  const [uploadPreview, setUploadPreview] = useState<string>('')
 
   useEffect(() => {
     if (!loading && !isAdmin) {
@@ -89,6 +90,7 @@ const AdminTemporadas = () => {
   const handleCancel = () => {
     setForm({ ...emptyForm })
     setUploadFile(null)
+    setUploadPreview('')
     setUploadError('')
     setError('')
   }
@@ -118,6 +120,19 @@ const AdminTemporadas = () => {
 
     const publicUrl = supabase.storage.from('series').getPublicUrl(data.path).data.publicUrl
     setForm((prev) => ({ ...prev, imagem: publicUrl }))
+    setUploadPreview(publicUrl)
+    if (form.id) {
+      const { error: updateError } = await supabase
+        .from('series')
+        .update({ imagem: publicUrl })
+        .eq('id', form.id)
+      if (updateError) {
+        console.error('Erro ao salvar imagem:', updateError)
+        setUploadError('Imagem enviada, mas nao foi salva na temporada.')
+      } else {
+        fetchSeries()
+      }
+    }
     setUploading(false)
   }
 
@@ -222,7 +237,11 @@ const AdminTemporadas = () => {
               <input
                 type="file"
                 accept="image/*"
-                onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                onChange={(e) => {
+                  const file = e.target.files?.[0] || null
+                  setUploadFile(file)
+                  setUploadPreview(file ? URL.createObjectURL(file) : '')
+                }}
                 className="text-xs text-white/80"
               />
               {uploadError && <p className="mt-2 text-xs text-red-300">{uploadError}</p>}
@@ -233,6 +252,16 @@ const AdminTemporadas = () => {
               >
                 {uploading ? 'Enviando...' : 'Enviar imagem'}
               </button>
+              {uploadPreview && (
+                <div className="mt-3">
+                  <p className="text-xs text-white/60 mb-2">Preview</p>
+                  <img
+                    src={uploadPreview}
+                    alt="Preview"
+                    className="h-24 w-24 rounded-md object-cover"
+                  />
+                </div>
+              )}
             </div>
             <input
               className="w-full rounded-md bg-[#141414] border border-white/10 p-3 text-sm text-white"
