@@ -85,6 +85,8 @@ const AdminTemporadas = () => {
       imagem: serie.imagem || '',
       rating: serie.rating?.toString() || '',
     })
+    setUploadError('')
+    setUploadPreview(serie.imagem || '')
   }
 
   const handleCancel = () => {
@@ -216,6 +218,15 @@ const AdminTemporadas = () => {
       <main className="px-8 py-8 grid gap-8 lg:grid-cols-[380px_1fr]">
         <section className="rounded-xl border border-white/10 bg-[#1b1b1b] p-6">
           <h2 className="text-lg font-semibold">{form.id ? 'Editar temporada' : 'Nova temporada'}</h2>
+          {form.id ? (
+            <p className="mt-1 text-xs text-white/60">
+              Temporada selecionada: {series.find((item) => item.id === form.id)?.nome || 'Sem nome'}
+            </p>
+          ) : (
+            <p className="mt-1 text-xs text-white/50">
+              Selecione uma temporada na lista e clique em Editar para fazer upload da imagem.
+            </p>
+          )}
           <div className="mt-4 space-y-3">
             <input
               className="w-full rounded-md bg-[#141414] border border-white/10 p-3 text-sm text-white"
@@ -246,12 +257,13 @@ const AdminTemporadas = () => {
                   setUploadPreview(file ? URL.createObjectURL(file) : '')
                 }}
                 className="text-xs text-white/80"
+                disabled={!form.id}
               />
               {uploadError && <p className="mt-2 text-xs text-red-300">{uploadError}</p>}
               <button
                 className="mt-3 rounded-md border border-white/10 px-3 py-2 text-xs text-white/80 hover:bg-white/5"
                 onClick={handleUpload}
-                disabled={uploading}
+                disabled={uploading || !form.id}
               >
                 {uploading ? 'Enviando...' : 'Enviar imagem'}
               </button>
