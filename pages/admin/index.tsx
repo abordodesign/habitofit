@@ -50,6 +50,7 @@ const AdminHome = () => {
             { title: 'Temporadas', description: 'Gerencie séries, capas e descrições.', href: '/admin/temporadas' },
             { title: 'Aulas', description: 'Cadastre vídeos, ordem e conteúdo.', href: '/admin/aulas' },
             { title: 'Notificações', description: 'Comunique novidades para os alunos.', href: '/admin/notificacoes' },
+            { title: 'Usuarios', description: 'Contas e status de assinaturas.', href: '/admin/usuarios' },
           ].map((card) => (
             <div
               key={card.title}
