@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
-import { supabase } from '@/lib/supabase'
 import useAdmin from '@/hooks/useAdmin'
+import useAuth from '@/hooks/useAuth'
 
 type Notificacao = {
   id: string
@@ -21,6 +21,7 @@ const emptyForm = {
 const AdminNotificacoes = () => {
   const router = useRouter()
   const { loading, isAdmin } = useAdmin()
+  const { user } = useAuth()
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([])
   const [form, setForm] = useState({ ...emptyForm })
   const [saving, setSaving] = useState(false)
@@ -35,25 +36,15 @@ const AdminNotificacoes = () => {
 
   const fetchNotificacoes = async () => {
     setLoadingList(true)
-    let response: any = await supabase
-      .from('notificacoes')
-      .select('id, titulo, descricao, imagem')
-      .order('id', { ascending: false })
-
-    if (response.error) {
-      response = (await supabase
-        .from('notifications')
-        .select('id, title, body, image')
-        .order('id', { ascending: false })) as any
-    }
-
-    if (response.error) {
-      console.error('Erro ao buscar notificacoes:', response.error)
-      setError('Nao foi possivel carregar as notificacoes.')
-      setNotificacoes([])
-    } else {
-      setError('')
-      const data = response.data || []
+    try {
+      if (!user) throw new Error('Usuario nao autenticado.')
+      const token = await user.getIdToken(true)
+      const res = await fetch('/api/admin/notificacoes', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const payload = await res.json()
+      if (!res.ok) throw new Error(payload.error || 'Falha ao buscar notificacoes.')
+      const data = payload.data || []
       const mapped = data.map((item: any) => ({
         id: String(item.id),
         titulo: item.titulo ?? item.title ?? '',
@@ -61,6 +52,11 @@ const AdminNotificacoes = () => {
         imagem: item.imagem ?? item.image ?? '',
       }))
       setNotificacoes(mapped)
+      setError('')
+    } catch (err: any) {
+      console.error('Erro ao buscar notificacoes:', err)
+      setError(err?.message || 'Nao foi possivel carregar as notificacoes.')
+      setNotificacoes([])
     }
     setLoadingList(false)
   }
@@ -108,36 +104,47 @@ const AdminNotificacoes = () => {
     setSaving(true)
     setError('')
 
-    const payload = {
-      titulo: form.titulo.trim(),
-      descricao: form.descricao.trim(),
-      imagem: form.imagem.trim() || null,
-    }
-
-    const baseTable = 'notificacoes'
-    const targetTable = baseTable
-
-    if (form.id) {
-      const { error: updateError } = await supabase
-        .from(targetTable)
-        .update(payload)
-        .eq('id', form.id)
-      if (updateError) {
-        console.error('Erro ao atualizar notificacao:', updateError)
-        setError('Nao foi possivel atualizar.')
+    try {
+      if (!user) throw new Error('Usuario nao autenticado.')
+      const token = await user.getIdToken(true)
+      if (form.id) {
+        const res = await fetch('/api/admin/notificacoes', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            id: form.id,
+            titulo: form.titulo.trim(),
+            descricao: form.descricao.trim(),
+            imagem: form.imagem.trim() || null,
+          }),
+        })
+        const payload = await res.json()
+        if (!res.ok) throw new Error(payload.error || 'Nao foi possivel atualizar.')
       } else {
-        setForm({ ...emptyForm })
-        fetchNotificacoes()
+        const res = await fetch('/api/admin/notificacoes', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            titulo: form.titulo.trim(),
+            descricao: form.descricao.trim(),
+            imagem: form.imagem.trim() || null,
+          }),
+        })
+        const payload = await res.json()
+        if (!res.ok) throw new Error(payload.error || 'Nao foi possivel criar.')
       }
-    } else {
-      const { error: insertError } = await supabase.from(targetTable).insert(payload)
-      if (insertError) {
-        console.error('Erro ao criar notificacao:', insertError)
-        setError('Nao foi possivel criar.')
-      } else {
-        setForm({ ...emptyForm })
-        fetchNotificacoes()
-      }
+      setForm({ ...emptyForm })
+      fetchNotificacoes()
+      setError('')
+    } catch (err: any) {
+      console.error('Erro ao salvar notificacao:', err)
+      setError(err?.message || 'Nao foi possivel salvar.')
     }
 
     setSaving(false)
@@ -145,13 +152,24 @@ const AdminNotificacoes = () => {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Excluir esta notificacao?')) return
-    const { error: deleteError } = await supabase.from('notificacoes').delete().eq('id', id)
-    if (deleteError) {
-      console.error('Erro ao excluir notificacao:', deleteError)
-      setError('Nao foi possivel excluir.')
-      return
+    try {
+      if (!user) throw new Error('Usuario nao autenticado.')
+      const token = await user.getIdToken(true)
+      const res = await fetch('/api/admin/notificacoes', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ id }),
+      })
+      const payload = await res.json()
+      if (!res.ok) throw new Error(payload.error || 'Nao foi possivel excluir.')
+      fetchNotificacoes()
+    } catch (err: any) {
+      console.error('Erro ao excluir notificacao:', err)
+      setError(err?.message || 'Nao foi possivel excluir.')
     }
-    fetchNotificacoes()
   }
 
   return (
