@@ -180,6 +180,13 @@ function Header({
         };
     }, []);
 
+    const defaultNotification = {
+        id: 'default-temporadas',
+        titulo: 'Temporadas',
+        descricao: 'Veja a nova temporada de Aulas Gravadas - Mais populares que foi adicionada em nosso catalogo',
+        imagem: '/card.png',
+    };
+
     const mapNotification = (item: any) => ({
         id: item.id ?? `${item.titulo ?? item.title ?? 'noti'}-${Math.random()}`,
         titulo: item.titulo ?? item.title ?? 'Temporadas',
@@ -544,7 +551,18 @@ function Header({
                             <p className="text-sm text-[#1d1e2c]">Carregando...</p>
                         )}
                         {!notificationsLoading && notifications.length === 0 && (
-                            <p className="text-sm text-[#1d1e2c]">Nenhuma novidade no momento.</p>
+                            <div className="notification-list">
+                                <div className="notification-item">
+                                    <div
+                                        className="notification-thumb"
+                                        style={{ backgroundImage: `url('${defaultNotification.imagem}')` }}
+                                    />
+                                    <div className="notification-text">
+                                        <h1>{defaultNotification.titulo}</h1>
+                                        <p>{defaultNotification.descricao}</p>
+                                    </div>
+                                </div>
+                            </div>
                         )}
                         {!notificationsLoading && notifications.length > 0 && (
                             <div className="notification-list">
