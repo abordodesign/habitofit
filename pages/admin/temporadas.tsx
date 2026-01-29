@@ -102,16 +102,12 @@ const AdminTemporadas = () => {
       setUploadError('Selecione uma imagem para upload.')
       return
     }
-    if (!form.id) {
-      setUploadError('Selecione uma temporada para atualizar a imagem.')
-      return
-    }
 
     setUploading(true)
     setUploadError('')
 
     const ext = uploadFile.name.split('.').pop() || 'png'
-    const fileName = `serie-${Date.now()}.${ext}`
+    const fileName = form.id ? `series/${form.id}.${ext}` : `series/temp-${Date.now()}.${ext}`
 
     const { data, error: uploadError } = await supabase.storage
       .from('series')
@@ -125,18 +121,21 @@ const AdminTemporadas = () => {
     }
 
     const publicUrl = supabase.storage.from('series').getPublicUrl(data.path).data.publicUrl
-    const previewUrl = `${publicUrl}${publicUrl.includes('?') ? '&' : '?'}t=${Date.now()}`
-    setForm((prev) => ({ ...prev, imagem: publicUrl }))
-    setUploadPreview(previewUrl)
-    const { error: updateError } = await supabase
-      .from('series')
-      .update({ imagem: publicUrl })
-      .eq('id', form.id)
-    if (updateError) {
-      console.error('Erro ao salvar imagem:', updateError)
-      setUploadError('Imagem enviada, mas nao foi salva na temporada.')
-    } else {
-      fetchSeries()
+    const cacheBustedUrl = `${publicUrl}${publicUrl.includes('?') ? '&' : '?'}t=${Date.now()}`
+    setForm((prev) => ({ ...prev, imagem: cacheBustedUrl }))
+    setUploadPreview(cacheBustedUrl)
+
+    if (form.id) {
+      const { error: updateError } = await supabase
+        .from('series')
+        .update({ imagem: cacheBustedUrl })
+        .eq('id', form.id)
+      if (updateError) {
+        console.error('Erro ao salvar imagem:', updateError)
+        setUploadError('Imagem enviada, mas nao foi salva na temporada.')
+      } else {
+        fetchSeries()
+      }
     }
     setUploading(false)
   }
@@ -224,7 +223,7 @@ const AdminTemporadas = () => {
             </p>
           ) : (
             <p className="mt-1 text-xs text-white/50">
-              Selecione uma temporada na lista e clique em Editar para fazer upload da imagem.
+              Voce pode fazer upload agora ou colar uma URL. A imagem sera usada ao criar.
             </p>
           )}
           <div className="mt-4 space-y-3">
@@ -257,13 +256,12 @@ const AdminTemporadas = () => {
                   setUploadPreview(file ? URL.createObjectURL(file) : '')
                 }}
                 className="text-xs text-white/80"
-                disabled={!form.id}
               />
               {uploadError && <p className="mt-2 text-xs text-red-300">{uploadError}</p>}
               <button
                 className="mt-3 rounded-md border border-white/10 px-3 py-2 text-xs text-white/80 hover:bg-white/5"
                 onClick={handleUpload}
-                disabled={uploading || !form.id}
+                disabled={uploading}
               >
                 {uploading ? 'Enviando...' : 'Enviar imagem'}
               </button>
