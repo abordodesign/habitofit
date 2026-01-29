@@ -7,6 +7,8 @@ import { auth, db } from '@/firebase';
 import { collection, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query, serverTimestamp, setDoc } from 'firebase/firestore';
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword, updateProfile } from 'firebase/auth';
 import { supabase } from '@/lib/supabase';
+import { useSetRecoilState } from 'recoil';
+import { modalState, serieState, episodioInicialState } from '@/atoms/modalAtom';
 
 
 function Header({
@@ -30,11 +32,15 @@ function Header({
     const [saveError, setSaveError] = useState('');
     const [avatarUrl, setAvatarUrl] = useState<string>('');
     const [searchTerm, setSearchTerm] = useState('');
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [searchLoading, setSearchLoading] = useState(false);
     const [searchSeries, setSearchSeries] = useState<any[]>([]);
     const [searchAulas, setSearchAulas] = useState<any[]>([]);
 
     const { logout, user, authReady } = useAuth();
+    const setShowModal = useSetRecoilState(modalState);
+    const setCurrentSerie = useSetRecoilState(serieState);
+    const setEpisodioInicial = useSetRecoilState(episodioInicialState);
 
     const [userData, setUserData] = useState({ name: '', email: '' });
     const [stripeData, setStripeData] = useState({
@@ -133,6 +139,45 @@ function Header({
             clearTimeout(timeoutId);
         };
     }, [searchTerm]);
+
+    const handleSelectSerie = (item: any) => {
+        setCurrentSerie({
+            id: String(item.id),
+            nome: item.nome,
+            descricao: item.descricao || '',
+            imagem: item.imagem || null,
+            rating: Number(item.rating || 0),
+        });
+        setEpisodioInicial(null);
+        setShowModal(true);
+        setIsSearchOpen(false);
+        setSearchTerm('');
+    };
+
+    const handleSelectAula = async (item: any) => {
+        const { data, error } = await supabase
+            .from('series')
+            .select('id, nome, descricao, imagem, rating')
+            .eq('id', item.grupo_id)
+            .single();
+
+        if (error || !data) {
+            console.error('Erro ao buscar serie da aula:', error);
+            return;
+        }
+
+        setCurrentSerie({
+            id: String(data.id),
+            nome: data.nome,
+            descricao: data.descricao || '',
+            imagem: data.imagem || null,
+            rating: Number(data.rating || 0),
+        });
+        setEpisodioInicial(String(item.id));
+        setShowModal(true);
+        setIsSearchOpen(false);
+        setSearchTerm('');
+    };
 
     useEffect(() => {
         const handleToggleNotification = async () => {
@@ -362,16 +407,31 @@ function Header({
             <div className="flex items-center space-x-6 text-sm font-light pr-20">
                 <div className="relative">
                     <div className="search-box">
-                        <button className="btn-search"><MagnifyingGlassIcon className="hidden sm:inline h-6 w-6" /></button>
-                        <input
-                            type="text"
-                            className="input-search"
-                            placeholder="buscar ..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+                        <button
+                            className="btn-search"
+                            onClick={() => {
+                                const next = !isSearchOpen;
+                                setIsSearchOpen(next);
+                                if (!next) setSearchTerm('');
+                            }}
+                        >
+                            {isSearchOpen ? (
+                                <XMarkIcon className="hidden sm:inline h-6 w-6" />
+                            ) : (
+                                <MagnifyingGlassIcon className="hidden sm:inline h-6 w-6" />
+                            )}
+                        </button>
+                        {isSearchOpen && (
+                            <input
+                                type="text"
+                                className="input-search"
+                                placeholder="buscar ..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        )}
                     </div>
-                    {searchTerm.trim() && (
+                    {isSearchOpen && searchTerm.trim() && (
                         <div className="absolute left-0 right-0 mt-2 rounded-md bg-[#141414] border border-white/10 shadow-lg z-50 max-h-80 overflow-y-auto">
                             {searchLoading && (
                                 <p className="text-white text-sm px-4 py-3">Buscando...</p>
@@ -385,12 +445,16 @@ function Header({
                                     <p className="text-xs uppercase text-gray-400 mb-2">Temporadas</p>
                                     <div className="space-y-2">
                                         {searchSeries.map((item: any) => (
-                                            <div key={`serie-${item.id}`} className="text-white text-sm">
+                                            <button
+                                                key={`serie-${item.id}`}
+                                                className="text-white text-sm text-left w-full hover:text-[#DF9DC0]"
+                                                onClick={() => handleSelectSerie(item)}
+                                            >
                                                 <p className="font-semibold">{item.nome}</p>
                                                 {item.descricao && (
                                                     <p className="text-xs text-gray-400 line-clamp-2">{item.descricao}</p>
                                                 )}
-                                            </div>
+                                            </button>
                                         ))}
                                     </div>
                                 </div>
@@ -401,12 +465,16 @@ function Header({
                                     <p className="text-xs uppercase text-gray-400 mb-2">Aulas</p>
                                     <div className="space-y-2">
                                         {searchAulas.map((item: any) => (
-                                            <div key={`aula-${item.id}`} className="text-white text-sm">
+                                            <button
+                                                key={`aula-${item.id}`}
+                                                className="text-white text-sm text-left w-full hover:text-[#DF9DC0]"
+                                                onClick={() => handleSelectAula(item)}
+                                            >
                                                 <p className="font-semibold">{item.nome}</p>
                                                 {item.subtitulo && (
                                                     <p className="text-xs text-gray-400 line-clamp-2">{item.subtitulo}</p>
                                                 )}
-                                            </div>
+                                            </button>
                                         ))}
                                     </div>
                                 </div>

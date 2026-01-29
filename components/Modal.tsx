@@ -1,6 +1,6 @@
 import MuiModal from "@mui/material/Modal"
 import { useRecoilState } from 'recoil'
-import { modalState, serieState } from '@/atoms/modalAtom'
+import { modalState, serieState, episodioInicialState } from '@/atoms/modalAtom'
 import { PlusIcon, XMarkIcon } from "@heroicons/react/24/solid"
 import { useEffect, useRef, useState } from "react"
 import { Episodio } from "@/typings"
@@ -30,6 +30,7 @@ import toast from "react-hot-toast"
 function Modal() {
   const [showModal, setShowModal] = useRecoilState(modalState)
   const [currentSerie] = useRecoilState(serieState)
+  const [episodioInicial, setEpisodioInicial] = useRecoilState(episodioInicialState)
   const [serieRating, setSerieRating] = useState(0)
   const [mediaSerie, setMediaSerie] = useState(0)
   const [notaUsuario, setNotaUsuario] = useState<number | null>(null);
@@ -145,8 +146,14 @@ function Modal() {
       }
 
       setEpisodios(episodiosData)
-      setVideoAtual(episodiosData[0])
-      fetchComentarios(episodiosData[0].id)
+      const episodioEscolhido =
+        episodioInicial ? episodiosData.find((ep) => ep.id === episodioInicial) : null
+      const episodioParaExibir = episodioEscolhido || episodiosData[0]
+      if (episodioParaExibir) {
+        setVideoAtual(episodioParaExibir)
+        fetchComentarios(episodioParaExibir.id)
+      }
+      setEpisodioInicial(null)
 
       const { data: serieData } = await supabase
         .from('series')

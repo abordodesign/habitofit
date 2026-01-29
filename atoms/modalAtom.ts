@@ -10,3 +10,8 @@ export const serieState = atom<Serie | null>({
   key: 'serieState',
   default: null,
 })
+
+export const episodioInicialState = atom<string | null>({
+  key: 'episodioInicialState',
+  default: null,
+})
