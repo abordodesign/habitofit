@@ -114,8 +114,13 @@ const AdminTemporadas = () => {
       .upload(fileName, uploadFile, { upsert: true })
 
     if (uploadError) {
-      console.error('Erro ao enviar imagem:', uploadError)
-      setUploadError('Nao foi possivel enviar a imagem.')
+      console.error('Erro ao enviar imagem:', {
+        message: uploadError.message,
+        error: uploadError.error,
+        statusCode: uploadError.statusCode,
+        name: uploadError.name,
+      })
+      setUploadError(`Nao foi possivel enviar a imagem. ${uploadError.message || ''}`.trim())
       setUploading(false)
       return null
     }
