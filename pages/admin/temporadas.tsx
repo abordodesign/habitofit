@@ -97,6 +97,12 @@ const AdminTemporadas = () => {
     setError('')
   }
 
+  const withCacheBuster = (url: string) => {
+    if (!url) return url
+    const joiner = url.includes('?') ? '&' : '?'
+    return `${url}${joiner}t=${Date.now()}`
+  }
+
   const uploadImage = async () => {
     if (!uploadFile) {
       setUploadError('Selecione uma imagem para upload.')
@@ -107,11 +113,11 @@ const AdminTemporadas = () => {
     setUploadError('')
 
     const ext = uploadFile.name.split('.').pop() || 'png'
-    const fileName = form.id ? `series/${form.id}.${ext}` : `series/temp-${Date.now()}.${ext}`
+    const fileName = form.id ? `${form.id}.${ext}` : `temp-${Date.now()}.${ext}`
 
     const { data, error: uploadError } = await supabase.storage
       .from('series')
-      .upload(fileName, uploadFile, { upsert: true })
+      .upload(fileName, uploadFile, { upsert: true, contentType: uploadFile.type })
 
     if (uploadError) {
       console.error('Erro ao enviar imagem:', {
@@ -125,7 +131,12 @@ const AdminTemporadas = () => {
     }
 
     const publicUrl = supabase.storage.from('series').getPublicUrl(data.path).data.publicUrl
-    const previewUrl = `${publicUrl}${publicUrl.includes('?') ? '&' : '?'}t=${Date.now()}`
+    if (!publicUrl) {
+      setUploadError('Nao foi possivel obter a URL da imagem.')
+      setUploading(false)
+      return null
+    }
+    const previewUrl = withCacheBuster(publicUrl)
     setUploadPreview(previewUrl)
     setUploading(false)
     return publicUrl
@@ -134,12 +145,13 @@ const AdminTemporadas = () => {
   const handleUpload = async () => {
     const publicUrl = await uploadImage()
     if (!publicUrl) return
-    setForm((prev) => ({ ...prev, imagem: publicUrl }))
+    const cacheBustedUrl = withCacheBuster(publicUrl)
+    setForm((prev) => ({ ...prev, imagem: cacheBustedUrl }))
 
     if (form.id) {
       const { error: updateError } = await supabase
         .from('series')
-        .update({ imagem: publicUrl })
+        .update({ imagem: cacheBustedUrl })
         .eq('id', form.id)
       if (updateError) {
         console.error('Erro ao salvar imagem:', updateError)
