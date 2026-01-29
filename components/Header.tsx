@@ -37,6 +37,9 @@ function Header({
     const [searchLoading, setSearchLoading] = useState(false);
     const [searchSeries, setSearchSeries] = useState<any[]>([]);
     const [searchAulas, setSearchAulas] = useState<any[]>([]);
+    const [showNotifications, setShowNotifications] = useState(false);
+    const [notifications, setNotifications] = useState<any[]>([]);
+    const [notificationsLoading, setNotificationsLoading] = useState(false);
 
     const { logout, user, authReady } = useAuth();
     const setShowModal = useSetRecoilState(modalState);
@@ -141,6 +144,49 @@ function Header({
         };
     }, [searchTerm]);
 
+    useEffect(() => {
+        let isActive = true;
+
+        const fetchNotifications = async () => {
+            setNotificationsLoading(true);
+            const tryFetch = async (table: string) => {
+                return supabase
+                    .from(table)
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(5);
+            };
+
+            let response = await tryFetch('notificacoes');
+            if (response.error) {
+                response = await tryFetch('notifications');
+            }
+
+            if (!isActive) return;
+
+            if (response.error) {
+                console.error('Erro ao buscar notificacoes:', response.error);
+                setNotifications([]);
+            } else {
+                setNotifications(response.data || []);
+            }
+            setNotificationsLoading(false);
+        };
+
+        fetchNotifications();
+
+        return () => {
+            isActive = false;
+        };
+    }, []);
+
+    const mapNotification = (item: any) => ({
+        id: item.id ?? `${item.titulo ?? item.title ?? 'noti'}-${Math.random()}`,
+        titulo: item.titulo ?? item.title ?? 'Temporadas',
+        descricao: item.descricao ?? item.message ?? item.body ?? '',
+        imagem: item.imagem ?? item.image ?? '/card.png',
+    });
+
     const handleSelectSerie = (item: any) => {
         setCurrentSerie({
             id: String(item.id),
@@ -181,11 +227,6 @@ function Header({
     };
 
     useEffect(() => {
-        const handleToggleNotification = async () => {
-            const notificationModule = await import('@/components/ToggleNotification');
-            notificationModule.toggleNotification();
-        };
-
         let unsubscribeProfile: undefined | (() => void);
 
         const fetchUserAndSubscription = async () => {
@@ -291,11 +332,7 @@ function Header({
         fetchUserAndSubscription();
         fetchStripeSummary();
 
-        const notiButton = document.querySelector('.noti');
-        if (notiButton) notiButton.addEventListener('click', handleToggleNotification);
-
         return () => {
-            if (notiButton) notiButton.removeEventListener('click', handleToggleNotification);
             if (unsubscribeProfile) {
                 unsubscribeProfile();
             }
@@ -487,18 +524,47 @@ function Header({
                     )}
                 </div>
                 <p className="text-[16px]">{displayName}</p>
-                <button className="noti">
+                <button
+                    className="noti"
+                    onClick={() => setShowNotifications((prev) => !prev)}
+                >
                     <BellIcon className="h-6 w-6" />
-                    <div className="blip"></div>
+                    <div className={`blip ${showNotifications || notifications.length === 0 ? 'hide' : ''}`}></div>
                 </button>
-                <div className="notification">
-                    <i className="fas fa-times close"></i>
+                <div className={`notification ${showNotifications ? 'open' : ''}`}>
+                    <button
+                        className="close"
+                        onClick={() => setShowNotifications(false)}
+                        aria-label="Fechar notificacoes"
+                    >
+                        <XMarkIcon className="h-5 w-5" />
+                    </button>
                     <div className="content">
-                        <div className="profile-img"></div>
-                        <div className="text">
-                            <h1 className="font-bold">Temporadas</h1>
-                            <p>Veja a nova temporada de Aulas Gravadas - Mais populares que foi adicionada em nosso catalogo</p>
-                        </div>
+                        {notificationsLoading && (
+                            <p className="text-sm text-[#1d1e2c]">Carregando...</p>
+                        )}
+                        {!notificationsLoading && notifications.length === 0 && (
+                            <p className="text-sm text-[#1d1e2c]">Nenhuma novidade no momento.</p>
+                        )}
+                        {!notificationsLoading && notifications.length > 0 && (
+                            <div className="notification-list">
+                                {notifications.map((raw) => {
+                                    const item = mapNotification(raw);
+                                    return (
+                                        <div key={item.id} className="notification-item">
+                                            <div
+                                                className="notification-thumb"
+                                                style={{ backgroundImage: `url('${item.imagem}')` }}
+                                            />
+                                            <div className="notification-text">
+                                                <h1>{item.titulo}</h1>
+                                                <p>{item.descricao}</p>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
                 </div>
                 <div ref={dropdownRef} className="relative flex items-center gap-1">
