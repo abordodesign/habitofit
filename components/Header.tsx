@@ -29,6 +29,10 @@ function Header({
     const [isSaving, setIsSaving] = useState(false);
     const [saveError, setSaveError] = useState('');
     const [avatarUrl, setAvatarUrl] = useState<string>('');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [searchLoading, setSearchLoading] = useState(false);
+    const [searchSeries, setSearchSeries] = useState<any[]>([]);
+    const [searchAulas, setSearchAulas] = useState<any[]>([]);
 
     const { logout, user, authReady } = useAuth();
 
@@ -77,6 +81,58 @@ function Header({
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
+
+    useEffect(() => {
+        let isActive = true;
+
+        const term = searchTerm.trim();
+        if (!term) {
+            setSearchSeries([]);
+            setSearchAulas([]);
+            setSearchLoading(false);
+            return;
+        }
+
+        setSearchLoading(true);
+        const timeoutId = setTimeout(async () => {
+            const like = `%${term}%`;
+            const [seriesRes, aulasRes] = await Promise.all([
+                supabase
+                    .from('series')
+                    .select('id, nome, descricao, imagem, rating')
+                    .or(`nome.ilike.${like},descricao.ilike.${like}`)
+                    .limit(8),
+                supabase
+                    .from('aulas')
+                    .select('id, nome, subtitulo, video, grupo_id')
+                    .or(`nome.ilike.${like},subtitulo.ilike.${like},video.ilike.${like}`)
+                    .limit(8),
+            ]);
+
+            if (!isActive) return;
+
+            if (seriesRes.error) {
+                console.error('Erro ao buscar series:', seriesRes.error);
+                setSearchSeries([]);
+            } else {
+                setSearchSeries(seriesRes.data || []);
+            }
+
+            if (aulasRes.error) {
+                console.error('Erro ao buscar aulas:', aulasRes.error);
+                setSearchAulas([]);
+            } else {
+                setSearchAulas(aulasRes.data || []);
+            }
+
+            setSearchLoading(false);
+        }, 350);
+
+        return () => {
+            isActive = false;
+            clearTimeout(timeoutId);
+        };
+    }, [searchTerm]);
 
     useEffect(() => {
         const handleToggleNotification = async () => {
@@ -304,9 +360,59 @@ function Header({
                 </ul>
             </div>
             <div className="flex items-center space-x-6 text-sm font-light pr-20">
-                <div className="search-box">
-                    <button className="btn-search"><MagnifyingGlassIcon className="hidden sm:inline h-6 w-6" /></button>
-                    <input type="text" className="input-search" placeholder="buscar ..." />
+                <div className="relative">
+                    <div className="search-box">
+                        <button className="btn-search"><MagnifyingGlassIcon className="hidden sm:inline h-6 w-6" /></button>
+                        <input
+                            type="text"
+                            className="input-search"
+                            placeholder="buscar ..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    {searchTerm.trim() && (
+                        <div className="absolute left-0 right-0 mt-2 rounded-md bg-[#141414] border border-white/10 shadow-lg z-50 max-h-80 overflow-y-auto">
+                            {searchLoading && (
+                                <p className="text-white text-sm px-4 py-3">Buscando...</p>
+                            )}
+                            {!searchLoading && searchSeries.length === 0 && searchAulas.length === 0 && (
+                                <p className="text-white text-sm px-4 py-3">Nenhum resultado.</p>
+                            )}
+
+                            {!searchLoading && searchSeries.length > 0 && (
+                                <div className="px-4 pt-3 pb-2">
+                                    <p className="text-xs uppercase text-gray-400 mb-2">Temporadas</p>
+                                    <div className="space-y-2">
+                                        {searchSeries.map((item: any) => (
+                                            <div key={`serie-${item.id}`} className="text-white text-sm">
+                                                <p className="font-semibold">{item.nome}</p>
+                                                {item.descricao && (
+                                                    <p className="text-xs text-gray-400 line-clamp-2">{item.descricao}</p>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {!searchLoading && searchAulas.length > 0 && (
+                                <div className="px-4 pt-3 pb-3 border-t border-white/10">
+                                    <p className="text-xs uppercase text-gray-400 mb-2">Aulas</p>
+                                    <div className="space-y-2">
+                                        {searchAulas.map((item: any) => (
+                                            <div key={`aula-${item.id}`} className="text-white text-sm">
+                                                <p className="font-semibold">{item.nome}</p>
+                                                {item.subtitulo && (
+                                                    <p className="text-xs text-gray-400 line-clamp-2">{item.subtitulo}</p>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
                 <p className="text-[16px]">{displayName}</p>
                 <button className="noti">
