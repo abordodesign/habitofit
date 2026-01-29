@@ -235,6 +235,7 @@ header{
   padding: 10px 12px;
   border-radius: 10px;
   background-color: #fffaf3;
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 .notification .notification-thumb {
   background: url('/card.png') center center no-repeat;

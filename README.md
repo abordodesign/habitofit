@@ -174,3 +174,43 @@ Resumo do trabalho
 - Secao de parceiros com carrossel horizontal e logo repetido.
 - Exibicao do Stripe Customer ID no modal de configuracoes.
 - Documento `STRIPE_CONFIG.md` com fluxo de integracao.
+
+## Registro de Alteracoes - 2026-01-29 (BRT - Belo Horizonte)
+
+Nome: Codex
+
+Resumo do trabalho
+- Implementado Painel Master protegido (`/admin`) com verificacao de admin via Firestore (`admins/{uid}`).
+- Criados modulos CRUD no painel: Temporadas, Aulas, Notificacoes e Usuarios/Assinaturas.
+- Upload de imagens para Temporadas com preview, cache-buster e salvamento automatico.
+- Upload admin via API segura (Firebase Admin + Supabase Service Role).
+- Busca global no header com resultados de Series/Aulas e abertura de modal ao clicar.
+- Notificacoes no header integradas ao painel, com alerta de novas notificacoes.
+- Melhorias visuais: painel responsivo, cards de notificacao com espacamento e fundo suave.
+- Removidos cards extras de temporadas do carrossel principal.
+- Rodape: link mailto em "Duvidas? Fale Conosco".
+
+Arquivos/rotas adicionados
+- `pages/admin/index.tsx` (Painel Master)
+- `pages/admin/temporadas.tsx` (CRUD Temporadas)
+- `pages/admin/aulas.tsx` (CRUD Aulas)
+- `pages/admin/notificacoes.tsx` (CRUD Notificacoes)
+- `pages/admin/usuarios.tsx` (Lista Usuarios/Assinaturas)
+- `pages/api/admin/users.ts` (API segura de usuarios)
+- `pages/api/admin/notificacoes.ts` (API segura de notificacoes)
+- `pages/api/admin/upload.ts` (Upload seguro de imagens)
+- `hooks/useAdmin.tsx`
+- `lib/firebaseAdmin.ts`
+- `lib/supabaseAdmin.ts`
+
+Variaveis de ambiente adicionadas/necessarias
+- `SUPABASE_URL` (ou `NEXT_PUBLIC_SUPABASE_URL`)
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `FIREBASE_SERVICE_ACCOUNT` (recomendado) ou:
+  - `FIREBASE_ADMIN_PROJECT_ID`
+  - `FIREBASE_ADMIN_CLIENT_EMAIL`
+  - `FIREBASE_ADMIN_PRIVATE_KEY`
+
+Observacoes
+- Notificacoes: se nao existir tabela no Supabase, o sistema usa Firestore (colecao `notificacoes`).
+- Upload do painel usa API admin e nao depende de sessao Supabase no browser.
