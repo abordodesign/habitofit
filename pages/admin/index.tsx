@@ -29,14 +29,14 @@ const AdminHome = () => {
         <title>Painel Master | HabitoFit</title>
       </Head>
 
-      <header className="px-8 py-6 border-b border-white/10">
-        <div className="flex items-center justify-between">
+      <header className="px-6 md:px-8 py-6 border-b border-white/10">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-bold">Painel Master</h1>
             <p className="text-sm text-white/60">Acesso: {role || 'viewer'}</p>
           </div>
           <button
-            className="rounded-full border border-white/20 px-4 py-2 text-sm hover:bg-white/10 transition"
+            className="self-start md:self-auto rounded-full border border-white/20 px-4 py-2 text-sm hover:bg-white/10 transition"
             onClick={() => router.push('/')}
           >
             Voltar ao site
@@ -44,8 +44,8 @@ const AdminHome = () => {
         </div>
       </header>
 
-      <main className="px-8 py-8 space-y-8">
-        <section className="grid gap-4 md:grid-cols-3">
+      <main className="px-6 md:px-8 py-8 space-y-8 max-w-7xl mx-auto">
+        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {[
             { title: 'Temporadas', description: 'Gerencie séries, capas e descrições.', href: '/admin/temporadas' },
             { title: 'Aulas', description: 'Cadastre vídeos, ordem e conteúdo.', href: '/admin/aulas' },
@@ -54,7 +54,7 @@ const AdminHome = () => {
           ].map((card) => (
             <div
               key={card.title}
-              className="rounded-xl border border-white/10 bg-[#1b1b1b] p-5 shadow"
+              className="rounded-xl border border-white/10 bg-[#1b1b1b] p-5 shadow min-h-[140px]"
             >
               <h3 className="text-lg font-semibold">{card.title}</h3>
               <p className="mt-2 text-sm text-white/70">{card.description}</p>
