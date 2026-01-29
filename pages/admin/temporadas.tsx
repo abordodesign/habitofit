@@ -122,7 +122,6 @@ const AdminTemporadas = () => {
     if (uploadError) {
       console.error('Erro ao enviar imagem:', {
         message: uploadError.message,
-        statusCode: uploadError.statusCode,
         name: uploadError.name,
       })
       setUploadError(`Nao foi possivel enviar a imagem. ${uploadError.message || ''}`.trim())
