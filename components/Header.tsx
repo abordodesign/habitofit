@@ -40,6 +40,7 @@ function Header({
     const [showNotifications, setShowNotifications] = useState(false);
     const [notifications, setNotifications] = useState<any[]>([]);
     const [notificationsLoading, setNotificationsLoading] = useState(false);
+    const [hasNewNotifications, setHasNewNotifications] = useState(false);
 
     const { logout, user, authReady } = useAuth();
     const setShowModal = useSetRecoilState(modalState);
@@ -148,29 +149,33 @@ function Header({
         let isActive = true;
 
         const fetchNotifications = async () => {
+            if (!user) return;
             setNotificationsLoading(true);
-            const tryFetch = async (table: string) => {
-                return supabase
-                    .from(table)
-                    .select('*')
-                    .order('created_at', { ascending: false })
-                    .limit(5);
-            };
+            try {
+                const token = await user.getIdToken(true);
+                const res = await fetch('/api/admin/notificacoes', {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                const payload = await res.json();
+                if (!isActive) return;
+                if (!res.ok) {
+                    console.error('Erro ao buscar notificacoes:', payload);
+                    setNotifications([]);
+                } else {
+                    const data = payload.data || [];
+                    setNotifications(data);
 
-            let response = await tryFetch('notificacoes');
-            if (response.error) {
-                response = await tryFetch('notifications');
-            }
-
-            if (!isActive) return;
-
-            if (response.error) {
-                console.error('Erro ao buscar notificacoes:', response.error);
+                    const latestId = data[0]?.id ? String(data[0].id) : '';
+                    const lastSeen = localStorage.getItem('notificacoes_last_seen') || '';
+                    setHasNewNotifications(latestId && latestId !== lastSeen);
+                }
+            } catch (error) {
+                console.error('Erro ao buscar notificacoes:', error);
+                if (!isActive) return;
                 setNotifications([]);
-            } else {
-                setNotifications(response.data || []);
+            } finally {
+                if (isActive) setNotificationsLoading(false);
             }
-            setNotificationsLoading(false);
         };
 
         fetchNotifications();
@@ -178,7 +183,7 @@ function Header({
         return () => {
             isActive = false;
         };
-    }, []);
+    }, [user]);
 
     const defaultNotification = {
         id: 'default-temporadas',
@@ -193,6 +198,15 @@ function Header({
         descricao: item.descricao ?? item.message ?? item.body ?? '',
         imagem: item.imagem ?? item.image ?? '/card.png',
     });
+
+    useEffect(() => {
+        if (!showNotifications) return;
+        const latestId = notifications[0]?.id ? String(notifications[0].id) : '';
+        if (latestId) {
+            localStorage.setItem('notificacoes_last_seen', latestId);
+        }
+        setHasNewNotifications(false);
+    }, [showNotifications, notifications]);
 
     const handleSelectSerie = (item: any) => {
         setCurrentSerie({
@@ -536,7 +550,7 @@ function Header({
                     onClick={() => setShowNotifications((prev) => !prev)}
                 >
                     <BellIcon className="h-6 w-6" />
-                    <div className={`blip ${showNotifications || notifications.length === 0 ? 'hide' : ''}`}></div>
+                    <div className={`blip ${showNotifications || !hasNewNotifications ? 'hide' : ''}`}></div>
                 </button>
                 <div className={`notification ${showNotifications ? 'open' : ''}`}>
                     <button
