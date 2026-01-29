@@ -74,7 +74,7 @@ const AdminUsuarios = () => {
         <title>Painel Master | Usuarios</title>
       </Head>
 
-      <header className="px-8 py-6 border-b border-white/10">
+      <header className="!static px-8 py-6 border-b border-white/10">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">Usuarios</h1>

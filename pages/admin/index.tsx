@@ -29,7 +29,7 @@ const AdminHome = () => {
         <title>Painel Master | HabitoFit</title>
       </Head>
 
-      <header className="px-6 md:px-8 py-6 border-b border-white/10">
+      <header className="!static px-6 md:px-8 py-6 border-b border-white/10">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-bold">Painel Master</h1>
