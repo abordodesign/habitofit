@@ -28,6 +28,9 @@ const AdminTemporadas = () => {
   const [saving, setSaving] = useState(false)
   const [loadingList, setLoadingList] = useState(true)
   const [error, setError] = useState('')
+  const [uploading, setUploading] = useState(false)
+  const [uploadFile, setUploadFile] = useState<File | null>(null)
+  const [uploadError, setUploadError] = useState('')
 
   useEffect(() => {
     if (!loading && !isAdmin) {
@@ -85,7 +88,37 @@ const AdminTemporadas = () => {
 
   const handleCancel = () => {
     setForm({ ...emptyForm })
+    setUploadFile(null)
+    setUploadError('')
     setError('')
+  }
+
+  const handleUpload = async () => {
+    if (!uploadFile) {
+      setUploadError('Selecione uma imagem para upload.')
+      return
+    }
+
+    setUploading(true)
+    setUploadError('')
+
+    const ext = uploadFile.name.split('.').pop() || 'png'
+    const fileName = `serie-${Date.now()}.${ext}`
+
+    const { data, error: uploadError } = await supabase.storage
+      .from('series')
+      .upload(fileName, uploadFile, { upsert: true })
+
+    if (uploadError) {
+      console.error('Erro ao enviar imagem:', uploadError)
+      setUploadError('Nao foi possivel enviar a imagem.')
+      setUploading(false)
+      return
+    }
+
+    const publicUrl = supabase.storage.from('series').getPublicUrl(data.path).data.publicUrl
+    setForm((prev) => ({ ...prev, imagem: publicUrl }))
+    setUploading(false)
   }
 
   const handleSave = async () => {
@@ -184,6 +217,23 @@ const AdminTemporadas = () => {
               value={form.imagem}
               onChange={(e) => handleChange('imagem', e.target.value)}
             />
+            <div className="rounded-md border border-white/10 p-3">
+              <p className="text-xs text-white/60 mb-2">Upload de imagem (bucket: series)</p>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                className="text-xs text-white/80"
+              />
+              {uploadError && <p className="mt-2 text-xs text-red-300">{uploadError}</p>}
+              <button
+                className="mt-3 rounded-md border border-white/10 px-3 py-2 text-xs text-white/80 hover:bg-white/5"
+                onClick={handleUpload}
+                disabled={uploading}
+              >
+                {uploading ? 'Enviando...' : 'Enviar imagem'}
+              </button>
+            </div>
             <input
               className="w-full rounded-md bg-[#141414] border border-white/10 p-3 text-sm text-white"
               placeholder="Rating (opcional)"
