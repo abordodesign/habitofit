@@ -48,7 +48,7 @@ const AdminHome = () => {
         <section className="grid gap-4 md:grid-cols-3">
           {[
             { title: 'Temporadas', description: 'Gerencie séries, capas e descrições.', href: '/admin/temporadas' },
-            { title: 'Aulas', description: 'Cadastre vídeos, ordem e conteúdo.' },
+            { title: 'Aulas', description: 'Cadastre vídeos, ordem e conteúdo.', href: '/admin/aulas' },
             { title: 'Notificações', description: 'Comunique novidades para os alunos.' },
           ].map((card) => (
             <div
