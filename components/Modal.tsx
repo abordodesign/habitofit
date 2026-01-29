@@ -195,37 +195,6 @@ function Modal() {
   };
 
 
-  const atualizarCacheFavoritos = (serie: { id: string; nome?: string; descricao?: string; imagem?: string | null; rating?: number }, adicionar: boolean) => {
-    if (typeof window === 'undefined') return
-    try {
-      const key = 'favoritos_cache'
-      const raw = window.localStorage.getItem(key)
-      const list = raw ? JSON.parse(raw) : []
-      const filtrados = Array.isArray(list) ? list : []
-      let atualizado
-      if (adicionar) {
-        const existe = filtrados.some((item: any) => String(item.serieId) === String(serie.id))
-        atualizado = existe
-          ? filtrados
-          : [
-              ...filtrados,
-              {
-                serieId: String(serie.id),
-                nome: serie.nome ?? null,
-                descricao: serie.descricao ?? null,
-                imagem: serie.imagem ?? null,
-                rating: serie.rating ?? null,
-              },
-            ]
-      } else {
-        atualizado = filtrados.filter((item: any) => String(item.serieId) !== String(serie.id))
-      }
-      window.localStorage.setItem(key, JSON.stringify(atualizado))
-    } catch (error) {
-      console.error('Erro ao atualizar cache de favoritos:', error)
-    }
-  }
-
   const toggleFavorito = async () => {
     const user = auth.currentUser
     if (!user || !currentSerie) return
@@ -234,12 +203,10 @@ function Modal() {
       await removerFavorito(user.uid, currentSerie.id)
       setIsFavorito(false)
       toast.success('Removido dos favoritos');
-      atualizarCacheFavoritos(currentSerie, false)
     } else {
       await adicionarFavorito(user.uid, currentSerie)
       setIsFavorito(true)
       toast.success('Adicionado aos favoritos')
-      atualizarCacheFavoritos(currentSerie, true)
     }
   }
 
