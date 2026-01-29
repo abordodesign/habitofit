@@ -222,7 +222,7 @@ header{
 .notification .notification-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
   max-height: 260px;
   overflow-y: auto;
   width: 100%;
@@ -232,6 +232,9 @@ header{
   display: flex;
   align-items: center;
   gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background-color: #fffaf3;
 }
 .notification .notification-thumb {
   background: url('/card.png') center center no-repeat;
