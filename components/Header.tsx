@@ -33,6 +33,7 @@ function Header({
     const [avatarUrl, setAvatarUrl] = useState<string>('');
     const [searchTerm, setSearchTerm] = useState('');
     const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const searchInputRef = useRef<HTMLInputElement>(null);
     const [searchLoading, setSearchLoading] = useState(false);
     const [searchSeries, setSearchSeries] = useState<any[]>([]);
     const [searchAulas, setSearchAulas] = useState<any[]>([]);
@@ -406,13 +407,17 @@ function Header({
             </div>
             <div className="flex items-center space-x-6 text-sm font-light pr-20">
                 <div className="relative">
-                    <div className="search-box">
+                    <div className={`search-box ${isSearchOpen ? 'open' : ''}`}>
                         <button
                             className="btn-search"
                             onClick={() => {
                                 const next = !isSearchOpen;
                                 setIsSearchOpen(next);
-                                if (!next) setSearchTerm('');
+                                if (!next) {
+                                    setSearchTerm('');
+                                } else {
+                                    setTimeout(() => searchInputRef.current?.focus(), 0);
+                                }
                             }}
                         >
                             {isSearchOpen ? (
@@ -421,15 +426,14 @@ function Header({
                                 <MagnifyingGlassIcon className="hidden sm:inline h-6 w-6" />
                             )}
                         </button>
-                        {isSearchOpen && (
-                            <input
-                                type="text"
-                                className="input-search"
-                                placeholder="buscar ..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        )}
+                        <input
+                            ref={searchInputRef}
+                            type="text"
+                            className="input-search"
+                            placeholder="buscar ..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
                     </div>
                     {isSearchOpen && searchTerm.trim() && (
                         <div className="absolute left-0 right-0 mt-2 rounded-md bg-[#141414] border border-white/10 shadow-lg z-50 max-h-80 overflow-y-auto">
