@@ -167,7 +167,7 @@ function Header({
 
                     const latestId = data[0]?.id ? String(data[0].id) : '';
                     const lastSeen = localStorage.getItem('notificacoes_last_seen') || '';
-                    setHasNewNotifications(latestId && latestId !== lastSeen);
+                    setHasNewNotifications(Boolean(latestId && latestId !== lastSeen));
                 }
             } catch (error) {
                 console.error('Erro ao buscar notificacoes:', error);
