@@ -35,16 +35,16 @@ const AdminNotificacoes = () => {
 
   const fetchNotificacoes = async () => {
     setLoadingList(true)
-    let response = await supabase
+    let response: any = await supabase
       .from('notificacoes')
       .select('id, titulo, descricao, imagem')
       .order('id', { ascending: false })
 
     if (response.error) {
-      response = await supabase
+      response = (await supabase
         .from('notifications')
         .select('id, title, body, image')
-        .order('id', { ascending: false })
+        .order('id', { ascending: false })) as any
     }
 
     if (response.error) {
