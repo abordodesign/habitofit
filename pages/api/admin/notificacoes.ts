@@ -12,25 +12,12 @@ const tables = ['notificacoes', 'notifications'] as const
 const isMissingRelation = (error: any) =>
   typeof error?.message === 'string' && error.message.includes('does not exist')
 
-const getTable = async () => {
+const pickTable = async () => {
   for (const table of tables) {
     const test = await supabaseAdmin.from(table).select('id').limit(1)
     if (!test.error) return table
   }
   return tables[0]
-}
-
-const withFallback = async <T>(
-  primary: (table: string) => Promise<T & { error?: any }>,
-  fallback: (table: string) => Promise<T & { error?: any }>
-) => {
-  const first = await primary(tables[0])
-  if (!first.error) return { result: first, table: tables[0] }
-  if (isMissingRelation(first.error)) {
-    const second = await fallback(tables[1])
-    return { result: second, table: tables[1] }
-  }
-  return { result: first, table: tables[0] }
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -44,63 +31,59 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const uid = decoded.uid
     if (!(await isAdmin(uid))) return res.status(403).json({ error: 'Forbidden' })
 
+    const table = await pickTable()
+
     if (req.method === 'GET') {
-      const { result, table } = await withFallback(
-        (t) => supabaseAdmin.from(t).select('*').order('id', { ascending: false }),
-        (t) => supabaseAdmin.from(t).select('*').order('id', { ascending: false })
-      )
+      let result = await supabaseAdmin.from(table).select('*').order('id', { ascending: false })
+      if (result.error && isMissingRelation(result.error) && table !== tables[1]) {
+        result = await supabaseAdmin.from(tables[1]).select('*').order('id', { ascending: false })
+      }
       if (result.error) return res.status(400).json({ error: result.error.message })
       return res.status(200).json({ data: result.data, table })
     }
 
     if (req.method === 'POST') {
       const { titulo, descricao, imagem } = req.body || {}
-      const { result, table } = await withFallback(
-        (t) =>
-          supabaseAdmin
-            .from(t)
-            .insert(t === 'notifications' ? { title: titulo, body: descricao, image: imagem } : { titulo, descricao, imagem })
-            .select('*')
-            .single(),
-        (t) =>
-          supabaseAdmin
-            .from(t)
-            .insert(t === 'notifications' ? { title: titulo, body: descricao, image: imagem } : { titulo, descricao, imagem })
-            .select('*')
-            .single()
-      )
+      const payload =
+        table === 'notifications'
+          ? { title: titulo, body: descricao, image: imagem }
+          : { titulo, descricao, imagem }
+      let result = await supabaseAdmin.from(table).insert(payload).select('*').single()
+      if (result.error && isMissingRelation(result.error) && table !== tables[1]) {
+        const fallbackPayload =
+          tables[1] === 'notifications'
+            ? { title: titulo, body: descricao, image: imagem }
+            : { titulo, descricao, imagem }
+        result = await supabaseAdmin.from(tables[1]).insert(fallbackPayload).select('*').single()
+      }
       if (result.error) return res.status(400).json({ error: result.error.message })
       return res.status(200).json({ data: result.data, table })
     }
 
     if (req.method === 'PUT') {
       const { id, titulo, descricao, imagem } = req.body || {}
-      const { result, table } = await withFallback(
-        (t) =>
-          supabaseAdmin
-            .from(t)
-            .update(t === 'notifications' ? { title: titulo, body: descricao, image: imagem } : { titulo, descricao, imagem })
-            .eq('id', id)
-            .select('*')
-            .single(),
-        (t) =>
-          supabaseAdmin
-            .from(t)
-            .update(t === 'notifications' ? { title: titulo, body: descricao, image: imagem } : { titulo, descricao, imagem })
-            .eq('id', id)
-            .select('*')
-            .single()
-      )
+      const payload =
+        table === 'notifications'
+          ? { title: titulo, body: descricao, image: imagem }
+          : { titulo, descricao, imagem }
+      let result = await supabaseAdmin.from(table).update(payload).eq('id', id).select('*').single()
+      if (result.error && isMissingRelation(result.error) && table !== tables[1]) {
+        const fallbackPayload =
+          tables[1] === 'notifications'
+            ? { title: titulo, body: descricao, image: imagem }
+            : { titulo, descricao, imagem }
+        result = await supabaseAdmin.from(tables[1]).update(fallbackPayload).eq('id', id).select('*').single()
+      }
       if (result.error) return res.status(400).json({ error: result.error.message })
       return res.status(200).json({ data: result.data, table })
     }
 
     if (req.method === 'DELETE') {
       const { id } = req.body || {}
-      const { result, table } = await withFallback(
-        (t) => supabaseAdmin.from(t).delete().eq('id', id),
-        (t) => supabaseAdmin.from(t).delete().eq('id', id)
-      )
+      let result = await supabaseAdmin.from(table).delete().eq('id', id)
+      if (result.error && isMissingRelation(result.error) && table !== tables[1]) {
+        result = await supabaseAdmin.from(tables[1]).delete().eq('id', id)
+      }
       if (result.error) return res.status(400).json({ error: result.error.message })
       return res.status(200).json({ ok: true, table })
     }
