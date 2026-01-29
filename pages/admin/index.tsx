@@ -47,7 +47,7 @@ const AdminHome = () => {
       <main className="px-8 py-8 space-y-8">
         <section className="grid gap-4 md:grid-cols-3">
           {[
-            { title: 'Temporadas', description: 'Gerencie séries, capas e descrições.' },
+            { title: 'Temporadas', description: 'Gerencie séries, capas e descrições.', href: '/admin/temporadas' },
             { title: 'Aulas', description: 'Cadastre vídeos, ordem e conteúdo.' },
             { title: 'Notificações', description: 'Comunique novidades para os alunos.' },
           ].map((card) => (
@@ -57,9 +57,18 @@ const AdminHome = () => {
             >
               <h3 className="text-lg font-semibold">{card.title}</h3>
               <p className="mt-2 text-sm text-white/70">{card.description}</p>
-              <button className="mt-4 text-sm text-[#DF9DC0] hover:underline">
-                Abrir módulo
-              </button>
+              {card.href ? (
+                <button
+                  className="mt-4 text-sm text-[#DF9DC0] hover:underline"
+                  onClick={() => router.push(card.href)}
+                >
+                  Abrir módulo
+                </button>
+              ) : (
+                <button className="mt-4 text-sm text-[#DF9DC0] hover:underline" disabled>
+                  Em breve
+                </button>
+              )}
             </div>
           ))}
         </section>
