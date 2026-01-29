@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { supabase } from '@/lib/supabase'
+import useAuth from '@/hooks/useAuth'
 import useAdmin from '@/hooks/useAdmin'
 
 type Serie = {
@@ -23,6 +24,7 @@ const emptyForm = {
 const AdminTemporadas = () => {
   const router = useRouter()
   const { loading, isAdmin } = useAdmin()
+  const { user } = useAuth()
   const [series, setSeries] = useState<Serie[]>([])
   const [form, setForm] = useState({ ...emptyForm })
   const [saving, setSaving] = useState(false)
@@ -108,6 +110,10 @@ const AdminTemporadas = () => {
       setUploadError('Selecione uma imagem para upload.')
       return null
     }
+    if (!user) {
+      setUploadError('Usuario nao autenticado.')
+      return null
+    }
 
     setUploading(true)
     setUploadError('')
@@ -115,21 +121,41 @@ const AdminTemporadas = () => {
     const ext = uploadFile.name.split('.').pop() || 'png'
     const fileName = form.id ? `${form.id}.${ext}` : `temp-${Date.now()}.${ext}`
 
-    const { data, error: uploadError } = await supabase.storage
-      .from('series')
-      .upload(fileName, uploadFile, { upsert: true, contentType: uploadFile.type })
+    const token = await user.getIdToken(true)
+    const base64 = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const result = reader.result?.toString() || ''
+        const cleaned = result.includes(',') ? result.split(',')[1] : result
+        resolve(cleaned)
+      }
+      reader.onerror = () => reject(new Error('Falha ao ler arquivo.'))
+      reader.readAsDataURL(uploadFile)
+    })
 
-    if (uploadError) {
-      console.error('Erro ao enviar imagem:', {
-        message: uploadError.message,
-        name: uploadError.name,
-      })
-      setUploadError(`Nao foi possivel enviar a imagem. ${uploadError.message || ''}`.trim())
+    const response = await fetch('/api/admin/upload', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        bucket: 'series',
+        path: fileName,
+        contentType: uploadFile.type || 'image/png',
+        base64,
+      }),
+    })
+
+    const payload = await response.json()
+    if (!response.ok) {
+      console.error('Erro ao enviar imagem:', payload)
+      setUploadError(`Nao foi possivel enviar a imagem. ${payload.error || ''}`.trim())
       setUploading(false)
       return null
     }
 
-    const publicUrl = supabase.storage.from('series').getPublicUrl(data.path).data.publicUrl
+    const publicUrl = payload.publicUrl as string
     if (!publicUrl) {
       setUploadError('Nao foi possivel obter a URL da imagem.')
       setUploading(false)
