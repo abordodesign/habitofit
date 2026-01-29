@@ -100,6 +100,10 @@ const AdminTemporadas = () => {
       setUploadError('Selecione uma imagem para upload.')
       return
     }
+    if (!form.id) {
+      setUploadError('Selecione uma temporada para atualizar a imagem.')
+      return
+    }
 
     setUploading(true)
     setUploadError('')
@@ -119,20 +123,18 @@ const AdminTemporadas = () => {
     }
 
     const publicUrl = supabase.storage.from('series').getPublicUrl(data.path).data.publicUrl
-    const cacheBustedUrl = `${publicUrl}${publicUrl.includes('?') ? '&' : '?'}t=${Date.now()}`
-    setForm((prev) => ({ ...prev, imagem: cacheBustedUrl }))
-    setUploadPreview(cacheBustedUrl)
-    if (form.id) {
-      const { error: updateError } = await supabase
-        .from('series')
-        .update({ imagem: cacheBustedUrl })
-        .eq('id', form.id)
-      if (updateError) {
-        console.error('Erro ao salvar imagem:', updateError)
-        setUploadError('Imagem enviada, mas nao foi salva na temporada.')
-      } else {
-        fetchSeries()
-      }
+    const previewUrl = `${publicUrl}${publicUrl.includes('?') ? '&' : '?'}t=${Date.now()}`
+    setForm((prev) => ({ ...prev, imagem: publicUrl }))
+    setUploadPreview(previewUrl)
+    const { error: updateError } = await supabase
+      .from('series')
+      .update({ imagem: publicUrl })
+      .eq('id', form.id)
+    if (updateError) {
+      console.error('Erro ao salvar imagem:', updateError)
+      setUploadError('Imagem enviada, mas nao foi salva na temporada.')
+    } else {
+      fetchSeries()
     }
     setUploading(false)
   }
