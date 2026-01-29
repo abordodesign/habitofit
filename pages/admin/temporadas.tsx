@@ -119,12 +119,13 @@ const AdminTemporadas = () => {
     }
 
     const publicUrl = supabase.storage.from('series').getPublicUrl(data.path).data.publicUrl
-    setForm((prev) => ({ ...prev, imagem: publicUrl }))
-    setUploadPreview(publicUrl)
+    const cacheBustedUrl = `${publicUrl}${publicUrl.includes('?') ? '&' : '?'}t=${Date.now()}`
+    setForm((prev) => ({ ...prev, imagem: cacheBustedUrl }))
+    setUploadPreview(cacheBustedUrl)
     if (form.id) {
       const { error: updateError } = await supabase
         .from('series')
-        .update({ imagem: publicUrl })
+        .update({ imagem: cacheBustedUrl })
         .eq('id', form.id)
       if (updateError) {
         console.error('Erro ao salvar imagem:', updateError)
